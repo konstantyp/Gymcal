@@ -25,12 +25,16 @@ fun widgetColorsForSeed(seedArgb: Long): WidgetTypeColors {
     )
 }
 
+/** Empty day number: onSurface bases @ 68% alpha. */
 fun emptyCellOnColor(dark: Boolean): Color =
-    if (dark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
+    if (dark) Color(0xFFE6E1E5).copy(alpha = 0.68f)
+    else Color(0xFF1D1B20).copy(alpha = 0.68f)
 
+/** Outside-month number: onSurface @ 38% opacity. */
 fun outsideDayOnColor(dark: Boolean): Color =
-    if (dark) Color.White.copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.35f)
+    if (dark) Color(0xFFE6E1E5).copy(alpha = 0.38f)
+    else Color(0xFF1D1B20).copy(alpha = 0.38f)
 
-/** Surface-variant-like empty fill (~40% alpha feel via soft gray). */
+/** Empty fill: primaryContainer-tint (not flat gray). */
 fun emptyCellFill(dark: Boolean): Color =
-    if (dark) Color(0xFF3A3A3C).copy(alpha = 0.45f) else Color(0xFFE7E0EC).copy(alpha = 0.45f)
+    if (dark) Color(0xFF4A4458) else Color(0xFFE8DEF8)

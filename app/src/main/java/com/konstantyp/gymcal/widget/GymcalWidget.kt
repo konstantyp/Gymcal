@@ -411,14 +411,20 @@ private fun DayCell(
         ),
     )
 
+    val emptyFillDay = emptyCellFill(dark = false).let {
+        if (isOutsideMonth) it.copy(alpha = 0.50f) else it
+    }
+    val emptyFillNight = emptyCellFill(dark = true).let {
+        if (isOutsideMonth) it.copy(alpha = 0.50f) else it
+    }
     val fillProvider: GlanceColorProvider = when {
         hasWorkout -> ColorProvider(
             day = colors!!.containerDay,
             night = colors.containerNight,
         )
         else -> ColorProvider(
-            day = emptyCellFill(dark = false),
-            night = emptyCellFill(dark = true),
+            day = emptyFillDay,
+            night = emptyFillNight,
         )
     }
 
