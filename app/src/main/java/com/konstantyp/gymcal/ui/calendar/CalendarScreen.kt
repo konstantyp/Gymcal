@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
 import com.konstantyp.gymcal.data.WorkoutType
+import com.konstantyp.gymcal.ui.quote.MotivationQuoteBar
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -172,6 +173,8 @@ fun CalendarScreen(
                 types = types,
                 onManageTypes = onManageTypes,
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            MotivationQuoteBar()
             if (!hasWorkoutsThisMonth) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
