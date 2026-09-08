@@ -339,7 +339,7 @@ private fun MiniMonthContent(
                             isOutsideMonth = outside,
                             types = types,
                             colors = colors,
-                            showTypeLabel = false,
+                            showTypeLabel = true,
                             numberFontSize = 12.sp,
                             corner = MonthDayCorner,
                             modifier = cellMod,
@@ -518,27 +518,64 @@ private fun DayCell(
         DayCellLabel(
             day = date.dayOfMonth,
             typeName = typeName,
-            // Dual: number only (BINDING B); single may show type label when space.
+            // Dual labels live in each half (BINDING widget-type-labels); single under number.
             showTypeLabel = showTypeLabel && slotCount == 1,
             numberFontSize = numberFontSize,
             onProvider = onProvider,
         )
     }
 
+    // Dual B: type name in each half (BINDING widget-type-labels); number overlay centered.
     val dualFill: @Composable (GlanceModifier) -> Unit = { innerMod ->
+        fun halfOn(c: WidgetTypeColors): GlanceColorProvider = ColorProvider(
+            day = c.onContainerDay,
+            night = c.onContainerNight,
+        )
         Column(modifier = innerMod) {
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .defaultWeight()
                     .background(typeFill(colors[0])),
-            ) {}
+                contentAlignment = Alignment.Center,
+            ) {
+                val n0 = types.getOrNull(0)?.name.orEmpty()
+                if (n0.isNotBlank()) {
+                    Text(
+                        text = n0,
+                        style = TextStyle(
+                            color = halfOn(colors[0]),
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                        ),
+                        maxLines = 1,
+                        modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 2.dp),
+                    )
+                }
+            }
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .defaultWeight()
                     .background(typeFill(colors[1])),
-            ) {}
+                contentAlignment = Alignment.Center,
+            ) {
+                val n1 = types.getOrNull(1)?.name.orEmpty()
+                if (n1.isNotBlank()) {
+                    Text(
+                        text = n1,
+                        style = TextStyle(
+                            color = halfOn(colors[1]),
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                        ),
+                        maxLines = 1,
+                        modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 2.dp),
+                    )
+                }
+            }
         }
     }
 
