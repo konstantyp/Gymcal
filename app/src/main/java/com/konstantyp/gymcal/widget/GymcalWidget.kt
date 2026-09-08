@@ -77,7 +77,7 @@ abstract class GymcalBaseWidget(
         val workouts = loaded.getOrNull()?.second.orEmpty()
         val loadError = loaded.isFailure
         val typesById = types.associateBy { it.id }
-        val colorCache = types.associate { it.id to widgetColorsForSeed(it.seedArgb) }
+        val colorCache = types.associate { it.id to widgetColorsForType(it) }
 
         provideContent {
             GlanceTheme(colors = DynamicThemeColorProviders) {
@@ -131,7 +131,7 @@ private val DestKey = ActionParameters.Key<String>(MainActivity.EXTRA_DEST)
 private val DateKey = ActionParameters.Key<String>(MainActivity.EXTRA_DATE)
 
 private val TypeLabelMinCellHeight = 45.dp
-/** GCal-like BINDING: root 28dp, pad 16, header 48. */
+/** GCal-like geometry + blue palette D: root 28dp, pad 16, header 48. */
 private val WidgetCorner = 28.dp
 private val WidgetPadding = 16.dp
 private val HeaderRowHeight = 48.dp
@@ -140,7 +140,7 @@ private val DayGap = 6.dp
 private val DayCorner = 16.dp
 private val MonthDayGap = 5.dp
 private val MonthDayCorner = 14.dp
-/** Today assigned primary ring inside cell. */
+/** Today assigned ice ring inside cell. */
 private val TodayRing = 2.5.dp
 /** Large radius → circle when cell is ~square (today empty). */
 private val CircleCorner = 100.dp
@@ -162,7 +162,7 @@ private fun WidgetRoot(
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(WidgetCorner)
-            .background(GlanceTheme.colors.widgetBackground)
+            .background(blueColor(BluePalette.Sky))
             .clickable(openCalendar)
             .padding(WidgetPadding),
     ) {
@@ -194,7 +194,7 @@ private fun ErrorContent(openCalendar: Action) {
         Text(
             text = LocalContext.current.getString(R.string.widget_open_gymcal),
             style = TextStyle(
-                color = GlanceTheme.colors.onSurface,
+                color = blueColor(BluePalette.Navy),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
             ),
@@ -208,7 +208,7 @@ private fun OpenPill(openCalendar: Action) {
         modifier = GlanceModifier
             .height(32.dp)
             .cornerRadius(16.dp)
-            .background(GlanceTheme.colors.primary)
+            .background(blueColor(BluePalette.Navy))
             .padding(horizontal = 16.dp)
             .clickable(openCalendar),
         contentAlignment = Alignment.Center,
@@ -216,7 +216,7 @@ private fun OpenPill(openCalendar: Action) {
         Text(
             text = LocalContext.current.getString(R.string.widget_open),
             style = TextStyle(
-                color = GlanceTheme.colors.onPrimary,
+                color = blueColor(BluePalette.Ice),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
@@ -359,7 +359,7 @@ private fun WeekHeader(weekStart: LocalDate, weekEnd: LocalDate, locale: Locale)
         Text(
             text = range,
             style = TextStyle(
-                color = GlanceTheme.colors.onSurface,
+                color = blueColor(BluePalette.Navy),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             ),
@@ -388,7 +388,7 @@ private fun MonthHeader(yearMonth: YearMonth, locale: Locale) {
         Text(
             text = title,
             style = TextStyle(
-                color = GlanceTheme.colors.onSurface,
+                color = blueColor(BluePalette.Navy),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
             ),
@@ -421,7 +421,7 @@ private fun WeekdayRow(
             Text(
                 text = label,
                 style = TextStyle(
-                    color = GlanceTheme.colors.onSurfaceVariant,
+                    color = blueColor(BluePalette.Steel),
                     fontSize = fontSize,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
@@ -453,35 +453,19 @@ private fun DayCell(
         ),
     )
 
-    val emptyFillDay = emptyCellFill(dark = false).let {
+    val emptyFill = emptyCellFill().let {
         if (isOutsideMonth) it.copy(alpha = 0.50f) else it
     }
-    val emptyFillNight = emptyCellFill(dark = true).let {
-        if (isOutsideMonth) it.copy(alpha = 0.50f) else it
-    }
-    val typeFillProvider: GlanceColorProvider = ColorProvider(
-        day = colors?.containerDay ?: emptyFillDay,
-        night = colors?.containerNight ?: emptyFillNight,
+    val typeFillProvider: GlanceColorProvider = blueColor(
+        colors?.container ?: emptyFill,
     )
-    val emptyFillProvider: GlanceColorProvider = ColorProvider(
-        day = emptyFillDay,
-        night = emptyFillNight,
-    )
+    val emptyFillProvider: GlanceColorProvider = blueColor(emptyFill)
 
     val onProvider: GlanceColorProvider = when {
-        isOutsideMonth -> ColorProvider(
-            day = outsideDayOnColor(false),
-            night = outsideDayOnColor(true),
-        )
-        isToday && !hasWorkout -> GlanceTheme.colors.onPrimary
-        hasWorkout -> ColorProvider(
-            day = colors!!.onContainerDay,
-            night = colors.onContainerNight,
-        )
-        else -> ColorProvider(
-            day = emptyCellOnColor(false),
-            night = emptyCellOnColor(true),
-        )
+        isOutsideMonth -> blueColor(outsideDayOnColor())
+        isToday && !hasWorkout -> blueColor(BluePalette.Navy)
+        hasWorkout -> blueColor(colors!!.onContainer)
+        else -> blueColor(emptyCellOnColor())
     }
 
     val typeName = type?.name.orEmpty()
@@ -503,12 +487,12 @@ private fun DayCell(
     }
 
     when {
-        // Today empty: primary filled circle + onPrimary number.
+        // Today empty: ice filled circle + navy number.
         isToday && !hasWorkout -> {
             Box(
                 modifier = modifier
                     .cornerRadius(CircleCorner)
-                    .background(GlanceTheme.colors.primary)
+                    .background(blueColor(BluePalette.Ice))
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
                 contentAlignment = Alignment.Center,
@@ -516,13 +500,13 @@ private fun DayCell(
                 label()
             }
         }
-        // Today assigned: type fill + primary ring 2–3 dp.
+        // Today assigned: type fill + ice ring 2–3 dp.
         isToday && hasWorkout -> {
             val innerCorner = (corner.value - TodayRing.value).coerceAtLeast(2f).dp
             Box(
                 modifier = modifier
                     .cornerRadius(corner)
-                    .background(GlanceTheme.colors.primary)
+                    .background(blueColor(BluePalette.Ice))
                     .padding(TodayRing)
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
@@ -552,7 +536,7 @@ private fun DayCell(
                 label()
             }
         }
-        // Empty (incl. outside): surfaceContainerHighest, no stroke.
+        // Empty (incl. outside): navy, no stroke.
         else -> {
             Box(
                 modifier = modifier

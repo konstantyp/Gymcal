@@ -1,41 +1,49 @@
 package com.konstantyp.gymcal.widget
 
 import androidx.compose.ui.graphics.Color
-import com.konstantyp.gymcal.ui.theme.runtimeColorsForSeed
+import androidx.glance.color.ColorProvider
+import androidx.glance.unit.ColorProvider as GlanceColorProvider
+import com.konstantyp.gymcal.data.WorkoutType
 
 /**
- * Widget type colors: same pre-31 / no-wallpaper path as the app
- * (light ≈ seed, dark ≈ lightened tonal). No dynamic wallpaper harmonize.
- *
- * Empty / outside tokens: DesignBot GCal-like BINDING
- * (surfaceContainerHighest, no stroke).
+ * Blue palette Variant D (BINDING) — widgets only.
+ * Hard five blues; no Material dynamic / wallpaper harmonize.
  */
-data class WidgetTypeColors(
-    val containerDay: Color,
-    val onContainerDay: Color,
-    val containerNight: Color,
-    val onContainerNight: Color,
-)
-
-fun widgetColorsForSeed(seedArgb: Long): WidgetTypeColors {
-    val light = runtimeColorsForSeed(seedArgb, darkTheme = false, sourceColor = null)
-    val dark = runtimeColorsForSeed(seedArgb, darkTheme = true, sourceColor = null)
-    return WidgetTypeColors(
-        containerDay = light.container,
-        onContainerDay = light.onContainer,
-        containerNight = dark.container,
-        onContainerNight = dark.onContainer,
-    )
+object BluePalette {
+    val Navy = Color(0xFF003366)
+    val Steel = Color(0xFF336699)
+    val Mid = Color(0xFF6699CC)
+    val Sky = Color(0xFF99CCFF)
+    val Ice = Color(0xFFCCFFFF)
 }
 
-/** Empty fill: surfaceContainerHighest (GCal-like chocolate-bar). */
-fun emptyCellFill(dark: Boolean): Color =
-    if (dark) Color(0xFF36343B) else Color(0xFFE6E0E9)
+fun blueColor(c: Color): GlanceColorProvider = ColorProvider(day = c, night = c)
 
-/** Empty day number: onSurfaceVariant. */
-fun emptyCellOnColor(dark: Boolean): Color =
-    if (dark) Color(0xFFCAC4D0) else Color(0xFF49454F)
+data class WidgetTypeColors(
+    val container: Color,
+    val onContainer: Color,
+)
 
-/** Outside-month number: empty number @ 38% opacity. */
-fun outsideDayOnColor(dark: Boolean): Color =
-    emptyCellOnColor(dark).copy(alpha = 0.38f)
+fun widgetColorsForType(type: WorkoutType): WidgetTypeColors {
+    val name = type.name.trim().lowercase()
+    return when {
+        name == "push" || type.id == "default-push" ->
+            WidgetTypeColors(BluePalette.Steel, BluePalette.Ice)
+        name == "pull" || type.id == "default-pull" ->
+            WidgetTypeColors(BluePalette.Mid, BluePalette.Navy)
+        name == "legs" || type.id == "default-legs" ->
+            WidgetTypeColors(BluePalette.Sky, BluePalette.Navy)
+        type.sortOrder % 3 == 0 ->
+            WidgetTypeColors(BluePalette.Steel, BluePalette.Ice)
+        type.sortOrder % 3 == 1 ->
+            WidgetTypeColors(BluePalette.Mid, BluePalette.Navy)
+        else ->
+            WidgetTypeColors(BluePalette.Sky, BluePalette.Navy)
+    }
+}
+
+fun emptyCellFill(): Color = BluePalette.Navy
+
+fun emptyCellOnColor(): Color = BluePalette.Ice
+
+fun outsideDayOnColor(): Color = BluePalette.Ice.copy(alpha = 0.38f)
