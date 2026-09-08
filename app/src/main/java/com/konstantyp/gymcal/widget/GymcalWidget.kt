@@ -136,7 +136,7 @@ private val WidgetCorner = 28.dp
 private val WidgetPadding = 16.dp
 private val HeaderRowHeight = 48.dp
 private val HeaderGap = 8.dp
-private val DayGap = 6.dp
+private val DayGap = 4.dp
 private val DayCorner = 16.dp
 private val MonthDayGap = 5.dp
 private val MonthDayCorner = 14.dp
@@ -149,7 +149,7 @@ private val EmptyStroke = 1.dp
 private fun WidgetRoot(
     layoutMode: WidgetLayoutMode,
     typesById: Map<String, WorkoutType>,
-    workouts: Map<LocalDate, String>,
+    workouts: Map<LocalDate, List<String>>,
     colorCache: Map<String, WidgetTypeColors>,
     loadError: Boolean,
 ) {
@@ -229,7 +229,7 @@ private fun OpenPill(openCalendar: Action) {
 @Composable
 private fun WeekStripContent(
     typesById: Map<String, WorkoutType>,
-    workouts: Map<LocalDate, String>,
+    workouts: Map<LocalDate, List<String>>,
     colorCache: Map<String, WidgetTypeColors>,
     size: DpSize,
 ) {
@@ -238,6 +238,7 @@ private fun WeekStripContent(
     val firstDow = weekFields.firstDayOfWeek
     val today = LocalDate.now()
     val weekStart = today.with(TemporalAdjusters.previousOrSame(firstDow))
+    // Always exactly 7 days — never crop to 5 (BINDING week7).
     val days = (0..6).map { weekStart.plusDays(it.toLong()) }
     val weekEnd = days.last()
 
@@ -265,14 +266,15 @@ private fun WeekStripContent(
                 if (index > 0) {
                     Spacer(modifier = GlanceModifier.width(DayGap))
                 }
-                val typeId = workouts[date]
-                val type = typeId?.let { typesById[it] }
+                val typeIds = workouts[date].orEmpty().take(2)
+                val types = typeIds.mapNotNull { typesById[it] }
+                val colors = types.mapNotNull { colorCache[it.id] }
                 DayCell(
                     date = date,
                     isToday = date == today,
                     isOutsideMonth = false,
-                    type = type,
-                    colors = type?.let { colorCache[it.id] },
+                    types = types,
+                    colors = colors,
                     showTypeLabel = showTypeLabels,
                     numberFontSize = 14.sp,
                     corner = DayCorner,
@@ -286,7 +288,7 @@ private fun WeekStripContent(
 @Composable
 private fun MiniMonthContent(
     typesById: Map<String, WorkoutType>,
-    workouts: Map<LocalDate, String>,
+    workouts: Map<LocalDate, List<String>>,
     colorCache: Map<String, WidgetTypeColors>,
 ) {
     val locale = Locale.getDefault()
@@ -323,14 +325,15 @@ private fun MiniMonthContent(
                             Spacer(modifier = GlanceModifier.width(MonthDayGap))
                         }
                         val outside = date.month != yearMonth.month
-                        val typeId = if (outside) null else workouts[date]
-                        val type = typeId?.let { typesById[it] }
+                        val typeIds = if (outside) emptyList() else workouts[date].orEmpty().take(2)
+                        val types = typeIds.mapNotNull { typesById[it] }
+                        val colors = types.mapNotNull { colorCache[it.id] }
                         DayCell(
                             date = date,
                             isToday = date == today && !outside,
                             isOutsideMonth = outside,
-                            type = type,
-                            colors = type?.let { colorCache[it.id] },
+                            types = types,
+                            colors = colors,
                             showTypeLabel = false,
                             numberFontSize = 12.sp,
                             corner = MonthDayCorner,
@@ -438,14 +441,18 @@ private fun DayCell(
     date: LocalDate,
     isToday: Boolean,
     isOutsideMonth: Boolean,
-    type: WorkoutType?,
-    colors: WidgetTypeColors?,
+    types: List<WorkoutType>,
+    colors: List<WidgetTypeColors>,
     showTypeLabel: Boolean,
     numberFontSize: TextUnit,
     corner: Dp,
     modifier: GlanceModifier,
 ) {
-    val hasWorkout = type != null && colors != null && !isOutsideMonth
+    val slotCount = minOf(types.size, colors.size).let { n ->
+        if (isOutsideMonth) 0 else n
+    }
+    val hasWorkout = slotCount >= 1
+    val isDual = slotCount >= 2
     val openDay = actionStartActivity<MainActivity>(
         actionParametersOf(
             DestKey to MainActivity.DEST_DETAIL,
@@ -453,18 +460,11 @@ private fun DayCell(
         ),
     )
 
-    val typeFillProvider: GlanceColorProvider = when {
-        colors != null -> ColorProvider(
-            day = colors.containerDay,
-            night = colors.containerNight,
-        )
-        else -> ColorProvider(
-            day = emptyCellFill(false),
-            night = emptyCellFill(false),
-        )
-    }
+    fun typeFill(c: WidgetTypeColors): GlanceColorProvider = ColorProvider(
+        day = c.containerDay,
+        night = c.containerNight,
+    )
 
-    // Empty = #051650 + light on-text (app DayCell parity); outlineVariant 1dp.
     val emptyFillProvider: GlanceColorProvider = ColorProvider(
         day = emptyCellFill(isOutsideMonth),
         night = emptyCellFill(isOutsideMonth),
@@ -479,9 +479,13 @@ private fun DayCell(
             day = emptyCellOn(true),
             night = emptyCellOn(true),
         )
-        hasWorkout -> ColorProvider(
-            day = colors!!.onContainerDay,
-            night = colors.onContainerNight,
+        isDual -> ColorProvider(
+            day = androidx.compose.ui.graphics.Color.White,
+            night = androidx.compose.ui.graphics.Color.White,
+        )
+        slotCount == 1 -> ColorProvider(
+            day = colors[0].onContainerDay,
+            night = colors[0].onContainerNight,
         )
         isToday -> GlanceTheme.colors.primary
         else -> ColorProvider(
@@ -490,11 +494,16 @@ private fun DayCell(
         )
     }
 
-    val typeName = type?.name.orEmpty()
+    val typeName = types.firstOrNull()?.name.orEmpty()
+    val dualNames = types.take(2).joinToString("+") { it.name }
     val ctx = LocalContext.current
     val desc = buildString {
         append(date.dayOfMonth)
-        if (hasWorkout) append(", $typeName") else append(", ${ctx.getString(R.string.widget_a11y_none)}")
+        when {
+            isDual -> append(", $dualNames")
+            hasWorkout -> append(", $typeName")
+            else -> append(", ${ctx.getString(R.string.widget_a11y_none)}")
+        }
         if (isToday) append(", ${ctx.getString(R.string.widget_a11y_today)}")
     }
 
@@ -502,14 +511,59 @@ private fun DayCell(
         DayCellLabel(
             day = date.dayOfMonth,
             typeName = typeName,
-            showTypeLabel = showTypeLabel && hasWorkout,
+            // Dual: number only (BINDING B); single may show type label when space.
+            showTypeLabel = showTypeLabel && slotCount == 1,
             numberFontSize = numberFontSize,
             onProvider = onProvider,
         )
     }
 
+    val dualFill: @Composable (GlanceModifier) -> Unit = { innerMod ->
+        Column(modifier = innerMod) {
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .defaultWeight()
+                    .background(typeFill(colors[0])),
+            ) {}
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .defaultWeight()
+                    .background(typeFill(colors[1])),
+            ) {}
+        }
+    }
+
     when {
-        // Today + assigned: type fill + primary ring (app DayCell today stroke).
+        // Today + dual: primary ring around whole cell, split fill inside.
+        isToday && isDual -> {
+            val innerCorner = (corner.value - TodayRing.value).coerceAtLeast(2f).dp
+            Box(
+                modifier = modifier
+                    .cornerRadius(corner)
+                    .background(GlanceTheme.colors.primary)
+                    .padding(TodayRing)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = GlanceModifier
+                        .fillMaxSize()
+                        .cornerRadius(innerCorner),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    dualFill(
+                        GlanceModifier
+                            .fillMaxSize()
+                            .cornerRadius(innerCorner),
+                    )
+                    label()
+                }
+            }
+        }
+        // Today + single assigned: type fill + primary ring.
         isToday && hasWorkout -> {
             val innerCorner = (corner.value - TodayRing.value).coerceAtLeast(2f).dp
             Box(
@@ -525,7 +579,7 @@ private fun DayCell(
                     modifier = GlanceModifier
                         .fillMaxSize()
                         .cornerRadius(innerCorner)
-                        .background(typeFillProvider),
+                        .background(typeFill(colors[0])),
                     contentAlignment = Alignment.Center,
                 ) {
                     label()
@@ -555,12 +609,25 @@ private fun DayCell(
                 }
             }
         }
-        // Assigned (not today): type tonal fill.
+        // Dual (not today): horizontal split B — two stacked fills.
+        isDual -> {
+            Box(
+                modifier = modifier
+                    .cornerRadius(corner)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
+                contentAlignment = Alignment.Center,
+            ) {
+                dualFill(GlanceModifier.fillMaxSize().cornerRadius(corner))
+                label()
+            }
+        }
+        // Assigned single (not today): type tonal fill.
         hasWorkout -> {
             Box(
                 modifier = modifier
                     .cornerRadius(corner)
-                    .background(typeFillProvider)
+                    .background(typeFill(colors[0]))
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
                 contentAlignment = Alignment.Center,

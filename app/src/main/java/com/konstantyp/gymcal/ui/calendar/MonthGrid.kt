@@ -17,7 +17,7 @@ import java.time.temporal.TemporalAdjusters
 @Composable
 fun MonthGrid(
     yearMonth: YearMonth,
-    workouts: Map<LocalDate, String>,
+    workouts: Map<LocalDate, List<String>>,
     typesById: Map<String, WorkoutType>,
     selectedDate: LocalDate?,
     today: LocalDate = LocalDate.now(),
@@ -37,15 +37,17 @@ fun MonthGrid(
             ) {
                 week.forEach { date ->
                     val outside = date.month != yearMonth.month
-                    val typeId = if (outside) null else workouts[date]
-                    val type = typeId?.let { typesById[it] }
+                    val ids = if (outside) emptyList() else workouts[date].orEmpty()
+                        .filter { typesById.containsKey(it) }
+                        .take(2)
+                    val names = ids.mapNotNull { typesById[it]?.name }
                     DayCell(
                         dayOfMonth = date.dayOfMonth,
                         isToday = date == today,
                         isOutsideMonth = outside,
                         isSelected = selectedDate == date,
-                        typeId = type?.id,
-                        typeName = type?.name,
+                        typeIds = ids,
+                        typeNames = names,
                         onClick = { onDayClick(date) },
                         modifier = Modifier.weight(1f),
                     )

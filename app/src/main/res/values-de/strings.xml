@@ -33,11 +33,15 @@
         <item>Fr</item><item>Sa</item><item>So</item>
     </string-array>
     <string name="workout_section">Training</string>
+    <string name="add_second_workout">Zweites Training hinzufügen</string>
     <string name="no_types_mark_day">Keine Trainingsarten. Füge eine Art hinzu, um den Tag zu markieren.</string>
     <string name="add_type">Art hinzufügen</string>
     <string name="manage_types">Arten verwalten</string>
     <string name="save">Speichern</string>
     <string name="clear_day">Tag leeren</string>
+    <string name="workout_slots_hint">Wähle bis zu 2 Workouts für diesen Tag (Reihenfolge = oben / unten).</string>
+    <string name="workout_slot_label">%1$d. %2$s</string>
+    <string name="clear_second_workout">Zweiten entfernen</string>
     <string name="types_title">Trainingsarten</string>
     <string name="cd_add_type">Art hinzufügen</string>
     <string name="types_empty">Keine Trainingsarten. Füge die erste Art hinzu.</string>

@@ -33,11 +33,15 @@
         <item>PT</item><item>SO</item><item>ND</item>
     </string-array>
     <string name="workout_section">Trening</string>
+    <string name="add_second_workout">Dodaj drugi trening</string>
     <string name="no_types_mark_day">Brak typów treningów. Dodaj typ, aby oznaczyć dzień.</string>
     <string name="add_type">Dodaj typ</string>
     <string name="manage_types">Zarządzaj typami</string>
     <string name="save">Zapisz</string>
     <string name="clear_day">Wyczyść dzień</string>
+    <string name="workout_slots_hint">Wybierz do 2 treningów na ten dzień (kolejność = góra / dół).</string>
+    <string name="workout_slot_label">%1$d. %2$s</string>
+    <string name="clear_second_workout">Usuń drugi</string>
     <string name="types_title">Typy treningów</string>
     <string name="cd_add_type">Dodaj typ</string>
     <string name="types_empty">Brak typów treningów. Dodaj pierwszy typ.</string>

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
 import com.konstantyp.gymcal.ui.theme.LocalTypeColorMap
+import com.konstantyp.gymcal.ui.theme.TypeRuntimeColors
 import com.konstantyp.gymcal.ui.theme.contrastingOnColor
 
 private val CellShape = RoundedCornerShape(8.dp)
@@ -47,53 +49,62 @@ fun DayCell(
     isToday: Boolean,
     isOutsideMonth: Boolean,
     isSelected: Boolean,
-    typeId: String?,
-    typeName: String?,
+    typeIds: List<String>,
+    typeNames: List<String>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
     val colorMap = LocalTypeColorMap.current
-    val runtime = typeId?.let { colorMap[it] }
-    // Missing type in map (deleted) → treat as empty
-    val hasWorkout = runtime != null && !isOutsideMonth
+    val runtimes: List<TypeRuntimeColors> = typeIds.mapNotNull { colorMap[it] }
+        .take(2)
+        .let { list -> if (isOutsideMonth) emptyList() else list }
+    val slotCount = runtimes.size
 
-    val baseFill: Color = when {
-        hasWorkout -> runtime!!.container
+    val baseFillSingle: Color = when {
+        slotCount == 1 -> runtimes[0].container
         isOutsideMonth -> EmptyDayFill.copy(alpha = 0.42f)
         else -> EmptyDayFill
     }
 
-    val fill: Color = if (isSelected && !isOutsideMonth) {
-        androidx.compose.ui.graphics.lerp(baseFill, scheme.primaryContainer, 0.32f)
+    val fillSingle: Color = if (isSelected && !isOutsideMonth && slotCount <= 1) {
+        androidx.compose.ui.graphics.lerp(baseFillSingle, scheme.primaryContainer, 0.32f)
     } else {
-        baseFill
+        baseFillSingle
     }
 
     val stroke: BorderStroke? = when {
         isToday && !isOutsideMonth -> BorderStroke(2.dp, scheme.primary)
         isSelected && !isOutsideMonth -> BorderStroke(2.dp, scheme.primary)
-        !hasWorkout && !isOutsideMonth -> BorderStroke(1.dp, EmptyDayStroke)
+        slotCount == 0 && !isOutsideMonth -> BorderStroke(1.dp, EmptyDayStroke)
         else -> null
     }
 
-    // Spec: label uses the same contrast color as the day number.
+    // Dual: centered light/contrasting number over both halves (BINDING B).
     val numberColor: Color = when {
         isOutsideMonth -> EmptyDayNumber.copy(alpha = 0.45f)
-        isSelected && !isOutsideMonth -> contrastingOnColor(fill)
-        hasWorkout -> runtime!!.onContainer
+        slotCount >= 2 -> Color.White
+        isSelected && !isOutsideMonth -> contrastingOnColor(fillSingle)
+        slotCount == 1 -> runtimes[0].onContainer
         isToday -> scheme.primary
         else -> EmptyDayNumber
     }
 
-    val showTypeLabel = hasWorkout && !typeName.isNullOrBlank()
-    val typeLabel = typeName ?: ""
+    val showTypeLabel = slotCount == 1 && typeNames.firstOrNull()?.isNotBlank() == true
+    val typeLabel = typeNames.firstOrNull().orEmpty()
     val todayFlag = if (isToday) stringResource(R.string.a11y_today) else ""
     val noWorkout = stringResource(R.string.a11y_no_workout)
     val outside = stringResource(R.string.a11y_outside_month)
     val desc = buildString {
         append("$dayOfMonth")
-        if (showTypeLabel) append(", $typeLabel") else append(", $noWorkout")
+        when {
+            slotCount >= 2 -> {
+                val names = typeNames.filter { it.isNotBlank() }.joinToString(", ")
+                if (names.isNotEmpty()) append(", $names") else append(", 2")
+            }
+            showTypeLabel -> append(", $typeLabel")
+            else -> append(", $noWorkout")
+        }
         if (todayFlag.isNotEmpty()) append(", $todayFlag")
         if (isOutsideMonth) append(", $outside")
     }
@@ -104,7 +115,9 @@ fun DayCell(
             .fillMaxWidth()
             .aspectRatio(1f)
             .clip(CellShape)
-            .background(fill, CellShape)
+            .then(
+                if (slotCount < 2) Modifier.background(fillSingle, CellShape) else Modifier
+            )
             .then(
                 if (stroke != null) Modifier.border(stroke, CellShape) else Modifier
             )
@@ -112,13 +125,23 @@ fun DayCell(
             .semantics { contentDescription = desc },
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-        ) {
+        if (slotCount >= 2) {
+            // Horizontal split B: top = slot0, bottom = slot1
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(runtimes[0].container),
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(runtimes[1].container),
+                )
+            }
+            // Number only, centered over both halves
             Text(
                 text = dayOfMonth.toString(),
                 style = MaterialTheme.typography.labelLarge,
@@ -126,17 +149,32 @@ fun DayCell(
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
             )
-            if (showTypeLabel) {
-                // dayCellLabelGap = 2.dp; labelSmall; maxLines 1; ellipsis
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+            ) {
                 Text(
-                    text = typeLabel,
-                    style = MaterialTheme.typography.labelSmall,
+                    text = dayOfMonth.toString(),
+                    style = MaterialTheme.typography.labelLarge,
                     color = numberColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 2.dp),
                 )
+                if (showTypeLabel) {
+                    Text(
+                        text = typeLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = numberColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
     }

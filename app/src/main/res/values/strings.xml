@@ -41,11 +41,15 @@
 
     <!-- Day detail -->
     <string name="workout_section">Workout</string>
+    <string name="add_second_workout">Add second workout</string>
     <string name="no_types_mark_day">No workout types. Add a type to mark this day.</string>
     <string name="add_type">Add type</string>
     <string name="manage_types">Manage types</string>
     <string name="save">Save</string>
     <string name="clear_day">Clear day</string>
+    <string name="workout_slots_hint">Select up to 2 workouts for this day (order = top / bottom).</string>
+    <string name="workout_slot_label">%1$d. %2$s</string>
+    <string name="clear_second_workout">Clear second</string>
 
     <!-- Types -->
     <string name="types_title">Workout types</string>

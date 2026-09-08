@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +41,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
+import com.konstantyp.gymcal.data.WorkoutRepository
 import com.konstantyp.gymcal.data.WorkoutType
 import com.konstantyp.gymcal.ui.theme.LocalTypeColorMap
 import java.time.LocalDate
@@ -50,20 +53,39 @@ import java.util.Locale
 fun DayDetailScreen(
     date: LocalDate,
     types: List<WorkoutType>,
-    initialTypeId: String?,
+    initialTypeIds: List<String>,
     onBack: () -> Unit,
-    onSave: (typeId: String) -> Unit,
+    onSave: (typeIds: List<String>) -> Unit,
     onClear: () -> Unit,
     onManageTypes: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // If initial type was deleted, treat as null
-    val validInitial = initialTypeId?.takeIf { id -> types.any { it.id == id } }
-    var selectedId by remember(date, validInitial, types) { mutableStateOf(validInitial) }
+    val validIds = remember(initialTypeIds, types) {
+        val known = types.map { it.id }.toSet()
+        initialTypeIds.filter { it in known }.distinct().take(WorkoutRepository.MAX_TYPES_PER_DAY)
+    }
+    var selectedIds by remember(date, validIds, types) {
+        mutableStateOf(validIds)
+    }
     val colorMap = LocalTypeColorMap.current
     val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     val title = remember(date, locale) {
         date.format(DateTimeFormatter.ofPattern("d MMMM yyyy", locale))
+    }
+    val typesById = remember(types) { types.associateBy { it.id } }
+
+    fun toggleType(id: String) {
+        selectedIds = when {
+            id in selectedIds -> selectedIds.filterNot { it == id }
+            selectedIds.size < WorkoutRepository.MAX_TYPES_PER_DAY -> selectedIds + id
+            else -> selectedIds // never a third
+        }
+    }
+
+    fun clearSecond() {
+        if (selectedIds.size >= 2) {
+            selectedIds = selectedIds.take(1)
+        }
     }
 
     Scaffold(
@@ -104,7 +126,39 @@ fun DayDetailScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.workout_slots_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(modifier = Modifier.height(12.dp))
+
+            // Ordered slot summary
+            if (selectedIds.isNotEmpty()) {
+                selectedIds.forEachIndexed { index, id ->
+                    val name = typesById[id]?.name ?: id
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.workout_slot_label, index + 1, name),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (index == 1) {
+                            TextButton(onClick = { clearSecond() }) {
+                                Text(stringResource(R.string.clear_second_workout))
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             if (types.isEmpty()) {
                 Text(
@@ -128,14 +182,21 @@ fun DayDetailScreen(
                             .verticalScroll(rememberScrollState()),
                     ) {
                         types.forEach { type ->
-                            val isSelected = selectedId == type.id
+                            val slotIndex = selectedIds.indexOf(type.id)
+                            val isSelected = slotIndex >= 0
                             val runtime = colorMap[type.id]
+                            val atMax = selectedIds.size >= WorkoutRepository.MAX_TYPES_PER_DAY
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { selectedId = type.id },
+                                onClick = { toggleType(type.id) },
+                                enabled = isSelected || !atMax,
                                 label = {
                                     Text(
-                                        text = type.name,
+                                        text = if (isSelected) {
+                                            "${slotIndex + 1}. ${type.name}"
+                                        } else {
+                                            type.name
+                                        },
                                         style = MaterialTheme.typography.labelLarge,
                                     )
                                 },
@@ -154,7 +215,7 @@ fun DayDetailScreen(
                                     null
                                 } else {
                                     FilterChipDefaults.filterChipBorder(
-                                        enabled = true,
+                                        enabled = isSelected || !atMax,
                                         selected = false,
                                         borderColor = MaterialTheme.colorScheme.outline,
                                     )
@@ -177,8 +238,8 @@ fun DayDetailScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { selectedId?.let(onSave) },
-                enabled = selectedId != null,
+                onClick = { onSave(selectedIds) },
+                enabled = selectedIds.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -187,7 +248,7 @@ fun DayDetailScreen(
                 )
             }
 
-            if (validInitial != null || selectedId != null) {
+            if (validIds.isNotEmpty() || selectedIds.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 TextButton(
                     onClick = onClear,

@@ -26,10 +26,16 @@ class WorkoutRepository(private val context: Context) {
     companion object {
         private val KEY_TYPES = stringPreferencesKey("__types_v1")
         private val KEY_SCHEMA = stringPreferencesKey("__schema_version")
-        private const val SCHEMA_V1_1 = "1.1"
+        private const val SCHEMA_V1_2 = "1.2"
 
         /** Public plan JSON schema version (DesignBot export/import contract). */
-        const val PLAN_JSON_VERSION = 1
+        const val PLAN_JSON_VERSION = 2
+        /** Oldest plan version still accepted on import. */
+        private const val PLAN_JSON_VERSION_MIN = 1
+
+        const val MAX_WORKOUTS_PER_DAY = 2
+        /** Alias used by day-detail UI. */
+        const val MAX_TYPES_PER_DAY = MAX_WORKOUTS_PER_DAY
 
         private val ENUM_NAMES = setOf("Push", "Pull", "Legs", "Chest", "Biceps")
     }
@@ -41,23 +47,21 @@ class WorkoutRepository(private val context: Context) {
         list.sortedBy { it.sortOrder }
     }
 
-    /** ISO date (yyyy-MM-dd) → typeId */
-    val workouts: Flow<Map<LocalDate, String>> = context.workoutDataStore.data.map { prefs ->
+    /** ISO date (yyyy-MM-dd) → ordered typeIds (1–2). Empty days omitted. */
+    val workouts: Flow<Map<LocalDate, List<String>>> = context.workoutDataStore.data.map { prefs ->
         prefs.asMap().mapNotNull { (key, value) ->
             if (key.name.startsWith("__")) return@mapNotNull null
             val date = runCatching { LocalDate.parse(key.name) }.getOrNull() ?: return@mapNotNull null
-            val typeId = value as? String ?: return@mapNotNull null
-            // Map legacy enum names on the fly if migration not yet flushed
-            val mapped = if (typeId in ENUM_NAMES) {
-                WorkoutType.migrateEnumName(typeId) ?: return@mapNotNull null
-            } else {
-                typeId
-            }
-            date to mapped
+            val raw = value as? String ?: return@mapNotNull null
+            val ids = decodeDayTypeIds(raw).mapNotNull { id ->
+                if (id in ENUM_NAMES) WorkoutType.migrateEnumName(id) else id
+            }.take(MAX_WORKOUTS_PER_DAY)
+            if (ids.isEmpty()) return@mapNotNull null
+            date to ids
         }.toMap()
     }
 
-    /** Persist default types + migrate old enum day values. Call from App.onCreate. */
+    /** Persist default types + migrate old enum / single-slot day values. Call from App.onCreate. */
     suspend fun ensureInitialized() {
         context.workoutDataStore.edit { prefs ->
             migrateLocked(prefs)
@@ -65,21 +69,29 @@ class WorkoutRepository(private val context: Context) {
         GymcalWidgetUpdater.requestUpdate(context)
     }
 
-    suspend fun setWorkout(date: LocalDate, typeId: String) {
+    /** Replace day slots with up to [MAX_WORKOUTS_PER_DAY] ordered type ids. Empty clears. */
+    suspend fun setWorkouts(date: LocalDate, typeIds: List<String>) {
+        val cleaned = typeIds.map { it.trim() }.filter { it.isNotEmpty() }.take(MAX_WORKOUTS_PER_DAY)
         context.workoutDataStore.edit { prefs ->
-            prefs[stringPreferencesKey(date.toString())] = typeId
+            migrateLocked(prefs)
+            val key = stringPreferencesKey(date.toString())
+            if (cleaned.isEmpty()) {
+                prefs.remove(key)
+            } else {
+                prefs[key] = encodeDayTypeIds(cleaned)
+            }
         }
-        // Ensure Flow snapshot is committed before Glance re-reads .first()
         workouts.first()
         GymcalWidgetUpdater.requestUpdate(context)
     }
 
+    /** Convenience: single-slot assignment (replaces any existing slots). */
+    suspend fun setWorkout(date: LocalDate, typeId: String) {
+        setWorkouts(date, listOf(typeId))
+    }
+
     suspend fun clearWorkout(date: LocalDate) {
-        context.workoutDataStore.edit { prefs ->
-            prefs.remove(stringPreferencesKey(date.toString()))
-        }
-        workouts.first()
-        GymcalWidgetUpdater.requestUpdate(context)
+        setWorkouts(date, emptyList())
     }
 
     suspend fun addType(name: String, seedArgb: Long): Result<WorkoutType> {
@@ -146,16 +158,23 @@ class WorkoutRepository(private val context: Context) {
         }
     }
 
-    /** Delete type and clear all days that referenced it. */
+    /** Delete type and remove it from any day slots (drop empty days). */
     suspend fun deleteType(id: String) {
         context.workoutDataStore.edit { prefs ->
             migrateLocked(prefs)
             val current = parseTypes(prefs[KEY_TYPES]).filterNot { it.id == id }
             prefs[KEY_TYPES] = serializeTypes(current)
-            val toRemove = prefs.asMap().keys.filter { key ->
-                !key.name.startsWith("__") && prefs[key] == id
+            val dayKeys = prefs.asMap().keys.filter { !it.name.startsWith("__") }
+            for (key in dayKeys) {
+                val raw = prefs[key] as? String ?: continue
+                val remaining = decodeDayTypeIds(raw).filter { it != id }
+                val stringKey = stringPreferencesKey(key.name)
+                if (remaining.isEmpty()) {
+                    prefs.remove(stringKey)
+                } else {
+                    prefs[stringKey] = encodeDayTypeIds(remaining)
+                }
             }
-            toRemove.forEach { prefs.remove(it) }
         }
         types.first()
         workouts.first()
@@ -163,8 +182,8 @@ class WorkoutRepository(private val context: Context) {
     }
 
     /**
-     * Export plan JSON (DesignBot contract):
-     * `{ "version": 1, "types": [...], "days": [{ "date", "typeId" }] }`
+     * Export plan JSON (DesignBot contract v2):
+     * `{ "version": 2, "types": [...], "days": [{ "date", "typeIds", "typeId"? }] }`
      */
     suspend fun exportPlanJson(): String {
         ensureInitialized()
@@ -184,12 +203,17 @@ class WorkoutRepository(private val context: Context) {
         }
         root.put("types", typesArr)
         val daysArr = JSONArray()
-        dayMap.toSortedMap().forEach { (date, typeId) ->
-            daysArr.put(
-                JSONObject()
-                    .put("date", date.toString())
-                    .put("typeId", typeId),
-            )
+        dayMap.toSortedMap(compareBy { it }).forEach { (date, typeIds) ->
+            val idsArr = JSONArray()
+            typeIds.forEach { idsArr.put(it) }
+            val dayObj = JSONObject()
+                .put("date", date.toString())
+                .put("typeIds", idsArr)
+            // Soft-read mirror for older tools
+            if (typeIds.isNotEmpty()) {
+                dayObj.put("typeId", typeIds.first())
+            }
+            daysArr.put(dayObj)
         }
         root.put("days", daysArr)
         return root.toString(2)
@@ -197,7 +221,8 @@ class WorkoutRepository(private val context: Context) {
 
     /**
      * Import plan JSON and **replace** types + day assignments.
-     * Validates version and type count; no partial write on failure.
+     * Accepts version 1 (single typeId) and version 2 (typeIds).
+     * Validates type count; no partial write on failure.
      */
     suspend fun importPlanJson(json: String): Result<Unit> {
         val parsed = runCatching { parsePlanJson(json) }.getOrElse { e ->
@@ -205,13 +230,12 @@ class WorkoutRepository(private val context: Context) {
         }
         return try {
             context.workoutDataStore.edit { prefs ->
-                // Clear existing day keys
                 val dayKeys = prefs.asMap().keys.filter { !it.name.startsWith("__") }
                 dayKeys.forEach { prefs.remove(it) }
                 prefs[KEY_TYPES] = serializeTypes(parsed.types)
-                prefs[KEY_SCHEMA] = SCHEMA_V1_1
-                parsed.days.forEach { (date, typeId) ->
-                    prefs[stringPreferencesKey(date.toString())] = typeId
+                prefs[KEY_SCHEMA] = SCHEMA_V1_2
+                parsed.days.forEach { (date, typeIds) ->
+                    prefs[stringPreferencesKey(date.toString())] = encodeDayTypeIds(typeIds)
                 }
             }
             types.first()
@@ -225,7 +249,7 @@ class WorkoutRepository(private val context: Context) {
 
     private data class ParsedPlan(
         val types: List<WorkoutType>,
-        val days: List<Pair<LocalDate, String>>,
+        val days: List<Pair<LocalDate, List<String>>>,
     )
 
     private fun parsePlanJson(json: String): ParsedPlan {
@@ -237,7 +261,8 @@ class WorkoutRepository(private val context: Context) {
         } catch (_: Exception) {
             throw IllegalArgumentException(context.getString(R.string.import_invalid_json))
         }
-        if (!root.has("version") || root.optInt("version", -1) != PLAN_JSON_VERSION) {
+        val version = root.optInt("version", -1)
+        if (version < PLAN_JSON_VERSION_MIN || version > PLAN_JSON_VERSION) {
             throw IllegalArgumentException(context.getString(R.string.import_invalid_json))
         }
         if (!root.has("types") || !root.has("days")) {
@@ -262,8 +287,8 @@ class WorkoutRepository(private val context: Context) {
                 add(WorkoutType(id = id, name = name, seedArgb = seedArgb, sortOrder = sortOrder))
             }
         }
-        val typeIds = typeList.map { it.id }.toSet()
-        if (typeIds.size != typeList.size) {
+        val knownTypeIds = typeList.map { it.id }.toSet()
+        if (knownTypeIds.size != typeList.size) {
             throw IllegalArgumentException(context.getString(R.string.import_invalid_json))
         }
         val daysArr = root.getJSONArray("days")
@@ -273,18 +298,39 @@ class WorkoutRepository(private val context: Context) {
                 val date = runCatching { LocalDate.parse(o.getString("date")) }.getOrElse {
                     throw IllegalArgumentException(context.getString(R.string.import_invalid_json))
                 }
-                val typeId = o.getString("typeId").trim()
-                if (typeId.isEmpty() || typeId !in typeIds) {
+                val ids = parseDayTypeIdsFromJson(o)
+                if (ids.isEmpty()) continue
+                if (ids.any { it !in knownTypeIds }) {
                     throw IllegalArgumentException(context.getString(R.string.import_invalid_json))
                 }
-                add(date to typeId)
+                add(date to ids)
             }
         }
         return ParsedPlan(types = typeList, days = days)
     }
 
+    /** Prefer typeIds; else typeId + optional typeId2. Cap at 2. */
+    private fun parseDayTypeIdsFromJson(o: JSONObject): List<String> {
+        if (o.has("typeIds")) {
+            val arr = o.optJSONArray("typeIds")
+                ?: throw IllegalArgumentException(context.getString(R.string.import_invalid_json))
+            return buildList {
+                for (i in 0 until minOf(arr.length(), MAX_WORKOUTS_PER_DAY)) {
+                    val id = arr.optString(i, "").trim()
+                    if (id.isNotEmpty()) add(id)
+                }
+            }
+        }
+        val first = o.optString("typeId", "").trim()
+        val second = o.optString("typeId2", "").trim()
+        return buildList {
+            if (first.isNotEmpty()) add(first)
+            if (second.isNotEmpty()) add(second)
+        }.take(MAX_WORKOUTS_PER_DAY)
+    }
+
     private fun migrateLocked(prefs: MutablePreferences) {
-        if (prefs[KEY_SCHEMA] == SCHEMA_V1_1 && prefs[KEY_TYPES] != null) return
+        if (prefs[KEY_SCHEMA] == SCHEMA_V1_2 && prefs[KEY_TYPES] != null) return
 
         if (prefs[KEY_TYPES] == null) {
             prefs[KEY_TYPES] = serializeTypes(WorkoutType.defaults())
@@ -294,18 +340,45 @@ class WorkoutRepository(private val context: Context) {
         for (key in keys) {
             if (key.name.startsWith("__")) continue
             val value = prefs[key] as? String ?: continue
-            if (value in ENUM_NAMES) {
-                val mapped = WorkoutType.migrateEnumName(value)
-                val stringKey = stringPreferencesKey(key.name)
-                if (mapped != null) {
-                    prefs[stringKey] = mapped
-                } else {
-                    prefs.remove(stringKey)
-                }
+            val stringKey = stringPreferencesKey(key.name)
+            val decoded = decodeDayTypeIds(value).mapNotNull { id ->
+                if (id in ENUM_NAMES) WorkoutType.migrateEnumName(id) else id
+            }.take(MAX_WORKOUTS_PER_DAY)
+            if (decoded.isEmpty()) {
+                prefs.remove(stringKey)
+            } else {
+                prefs[stringKey] = encodeDayTypeIds(decoded)
             }
         }
 
-        prefs[KEY_SCHEMA] = SCHEMA_V1_1
+        prefs[KEY_SCHEMA] = SCHEMA_V1_2
+    }
+
+    /** Persist day slots as a JSON string array. */
+    private fun encodeDayTypeIds(ids: List<String>): String {
+        val arr = JSONArray()
+        ids.take(MAX_WORKOUTS_PER_DAY).forEach { arr.put(it) }
+        return arr.toString()
+    }
+
+    /**
+     * Read day value: JSON array `["id"]` / `["a","b"]`, or legacy plain typeId / enum name.
+     */
+    private fun decodeDayTypeIds(raw: String): List<String> {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return emptyList()
+        if (trimmed.startsWith("[")) {
+            return runCatching {
+                val arr = JSONArray(trimmed)
+                buildList {
+                    for (i in 0 until minOf(arr.length(), MAX_WORKOUTS_PER_DAY)) {
+                        val id = arr.optString(i, "").trim()
+                        if (id.isNotEmpty()) add(id)
+                    }
+                }
+            }.getOrElse { emptyList() }
+        }
+        return listOf(trimmed)
     }
 
     private fun parseTypes(json: String?): List<WorkoutType> {

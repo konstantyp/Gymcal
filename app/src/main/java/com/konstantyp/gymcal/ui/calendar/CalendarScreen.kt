@@ -48,7 +48,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
-    workouts: Map<LocalDate, String>,
+    workouts: Map<LocalDate, List<String>>,
     types: List<WorkoutType>,
     onDayClick: (LocalDate) -> Unit,
     onManageTypes: () -> Unit,
@@ -66,9 +66,9 @@ fun CalendarScreen(
     val monthTitle = yearMonth.atDay(1).format(titleFormatter)
         .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
 
-    val hasWorkoutsThisMonth = workouts.keys.any {
-        it.year == yearMonth.year && it.month == yearMonth.month &&
-            typesById.containsKey(workouts[it])
+    val hasWorkoutsThisMonth = workouts.any { (date, ids) ->
+        date.year == yearMonth.year && date.month == yearMonth.month &&
+            ids.any { typesById.containsKey(it) }
     }
 
     Scaffold(
