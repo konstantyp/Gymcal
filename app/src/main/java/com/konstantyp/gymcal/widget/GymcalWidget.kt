@@ -133,10 +133,12 @@ private val DateKey = ActionParameters.Key<String>(MainActivity.EXTRA_DATE)
 private val TypeLabelMinCellHeight = 56.dp
 private val WidgetCorner = 16.dp
 private val WidgetPadding = 12.dp
-private val DayGap = 4.dp
-private val DayCorner = 8.dp
-private val MonthDayGap = 3.dp
-private val MonthDayCorner = 6.dp
+private val DayGap = 6.dp
+private val DayCorner = 7.dp
+private val DayCellInset = 4.dp
+private val MonthDayGap = 5.dp
+private val MonthDayCorner = 5.dp
+private val MonthDayCellInset = 2.dp
 private val HeaderGap = 8.dp
 private val TodayStroke = 2.dp
 
@@ -237,6 +239,7 @@ private fun WeekStripContent(
                     showTypeLabel = showTypeLabels,
                     numberFontSize = 13.sp,
                     corner = DayCorner,
+                    inset = DayCellInset,
                     modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
                 )
             }
@@ -289,6 +292,7 @@ private fun MiniMonthContent(
                             showTypeLabel = false,
                             numberFontSize = 10.sp,
                             corner = MonthDayCorner,
+                            inset = MonthDayCellInset,
                             modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
                         )
                     }
@@ -396,6 +400,7 @@ private fun DayCell(
     showTypeLabel: Boolean,
     numberFontSize: TextUnit,
     corner: Dp,
+    inset: Dp,
     modifier: GlanceModifier,
 ) {
     val hasWorkout = type != null && colors != null && !isOutsideMonth
@@ -441,9 +446,11 @@ private fun DayCell(
         if (isToday) append(", ${ctx.getString(R.string.widget_a11y_today)}")
     }
 
+    // Inset before background so colored rect is ~80% of grid slot (Glance has no scale).
     val cellModifier = if (isToday) {
         GlanceModifier
             .then(modifier)
+            .padding(inset)
             .cornerRadius(corner)
             .background(GlanceTheme.colors.primary)
             .padding(TodayStroke)
@@ -452,6 +459,7 @@ private fun DayCell(
     } else {
         GlanceModifier
             .then(modifier)
+            .padding(inset)
             .cornerRadius(corner)
             .background(fillProvider)
             .semantics { contentDescription = desc }
