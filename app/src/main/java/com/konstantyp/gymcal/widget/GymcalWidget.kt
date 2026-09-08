@@ -142,9 +142,6 @@ private val MonthDayGap = 3.dp
 private val MonthDayCorner = 12.dp
 /** Today primary ring (app DayCell BorderStroke 2dp primary). */
 private val TodayRing = 2.dp
-/** Empty day outlineVariant stroke (app DayCell parity). */
-private val EmptyStroke = 1.dp
-
 @Composable
 private fun WidgetRoot(
     layoutMode: WidgetLayoutMode,
@@ -484,10 +481,6 @@ private fun DayCell(
         day = emptyCellFill(isOutsideMonth),
         night = emptyCellFill(isOutsideMonth),
     )
-    val emptyStrokeProvider: GlanceColorProvider = ColorProvider(
-        day = outlineVariantFallback(false),
-        night = outlineVariantFallback(true),
-    )
 
     val onProvider: GlanceColorProvider = when {
         isOutsideMonth -> ColorProvider(
@@ -687,40 +680,17 @@ private fun DayCell(
                 label()
             }
         }
-        // Empty: #0F131C + outlineVariant 1dp (app DayCell parity).
+        // Empty: #0F131C fill, no outline (BINDING widget-no-empty-outline).
         else -> {
-            if (isOutsideMonth) {
-                Box(
-                    modifier = modifier
-                        .cornerRadius(corner)
-                        .background(emptyFillProvider)
-                        .semantics { contentDescription = desc }
-                        .clickable(openDay),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    label()
-                }
-            } else {
-                val innerCorner = (corner.value - EmptyStroke.value).coerceAtLeast(2f).dp
-                Box(
-                    modifier = modifier
-                        .cornerRadius(corner)
-                        .background(emptyStrokeProvider)
-                        .padding(EmptyStroke)
-                        .semantics { contentDescription = desc }
-                        .clickable(openDay),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        modifier = GlanceModifier
-                            .fillMaxSize()
-                            .cornerRadius(innerCorner)
-                            .background(emptyFillProvider),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        label()
-                    }
-                }
+            Box(
+                modifier = modifier
+                    .cornerRadius(corner)
+                    .background(emptyFillProvider)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
+                contentAlignment = Alignment.Center,
+            ) {
+                label()
             }
         }
     }
