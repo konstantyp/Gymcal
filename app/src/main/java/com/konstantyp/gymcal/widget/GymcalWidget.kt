@@ -131,17 +131,19 @@ private val DestKey = ActionParameters.Key<String>(MainActivity.EXTRA_DEST)
 private val DateKey = ActionParameters.Key<String>(MainActivity.EXTRA_DATE)
 
 private val TypeLabelMinCellHeight = 45.dp
-private val WidgetCorner = 16.dp
-private val WidgetPadding = 12.dp
-private val DayGap = 6.dp
-private val DayCorner = 7.dp
-private val DayCellInset = 4.dp
-private val MonthDayGap = 5.dp
-private val MonthDayCorner = 5.dp
-private val MonthDayCellInset = 2.dp
+/** GCal-like BINDING: root 28dp, pad 16, header 48. */
+private val WidgetCorner = 28.dp
+private val WidgetPadding = 16.dp
+private val HeaderRowHeight = 48.dp
 private val HeaderGap = 8.dp
-private val TodayStroke = 2.dp
-private val EmptyStroke = 1.dp
+private val DayGap = 6.dp
+private val DayCorner = 16.dp
+private val MonthDayGap = 5.dp
+private val MonthDayCorner = 14.dp
+/** Today assigned primary ring inside cell. */
+private val TodayRing = 2.5.dp
+/** Large radius → circle when cell is ~square (today empty). */
+private val CircleCorner = 100.dp
 
 @Composable
 private fun WidgetRoot(
@@ -156,14 +158,13 @@ private fun WidgetRoot(
         actionParametersOf(DestKey to MainActivity.DEST_CALENDAR),
     )
 
-    val contentPadding = if (layoutMode == WidgetLayoutMode.Month) 8.dp else WidgetPadding
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .cornerRadius(WidgetCorner)
             .background(GlanceTheme.colors.widgetBackground)
             .clickable(openCalendar)
-            .padding(contentPadding),
+            .padding(WidgetPadding),
     ) {
         if (loadError) {
             ErrorContent(openCalendar)
@@ -202,6 +203,30 @@ private fun ErrorContent(openCalendar: Action) {
 }
 
 @Composable
+private fun OpenPill(openCalendar: Action) {
+    Box(
+        modifier = GlanceModifier
+            .height(32.dp)
+            .cornerRadius(16.dp)
+            .background(GlanceTheme.colors.primary)
+            .padding(horizontal = 16.dp)
+            .clickable(openCalendar),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = LocalContext.current.getString(R.string.widget_open),
+            style = TextStyle(
+                color = GlanceTheme.colors.onPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+            ),
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
 private fun WeekStripContent(
     typesById: Map<String, WorkoutType>,
     workouts: Map<LocalDate, String>,
@@ -210,17 +235,28 @@ private fun WeekStripContent(
 ) {
     val locale = Locale.getDefault()
     val weekFields = WeekFields.of(locale)
+    val firstDow = weekFields.firstDayOfWeek
     val today = LocalDate.now()
-    val weekStart = today.with(TemporalAdjusters.previousOrSame(weekFields.firstDayOfWeek))
+    val weekStart = today.with(TemporalAdjusters.previousOrSame(firstDow))
     val days = (0..6).map { weekStart.plusDays(it.toLong()) }
     val weekEnd = days.last()
 
-    val cellHeight = size.height - WidgetPadding * 2 - 18.dp - HeaderGap
+    // Header 48 + weekday ~14 + gaps; remaining height for day cells.
+    val cellHeight = size.height - WidgetPadding * 2 - HeaderRowHeight - 14.dp - HeaderGap - 4.dp
     val showTypeLabels = cellHeight >= TypeLabelMinCellHeight
 
     Column(modifier = GlanceModifier.fillMaxSize()) {
         WeekHeader(weekStart = weekStart, weekEnd = weekEnd, locale = locale)
-        Spacer(modifier = GlanceModifier.height(HeaderGap))
+        Spacer(modifier = GlanceModifier.height(4.dp))
+        WeekdayRow(
+            firstDayOfWeek = firstDow,
+            locale = locale,
+            threeLetter = false,
+            gap = DayGap,
+            rowHeight = 14.dp,
+            fontSize = 11.sp,
+        )
+        Spacer(modifier = GlanceModifier.height(4.dp))
         Row(
             modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
             verticalAlignment = Alignment.CenterVertically,
@@ -238,9 +274,8 @@ private fun WeekStripContent(
                     type = type,
                     colors = type?.let { colorCache[it.id] },
                     showTypeLabel = showTypeLabels,
-                    numberFontSize = 13.sp,
+                    numberFontSize = 14.sp,
                     corner = DayCorner,
-                    inset = DayCellInset,
                     modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
                 )
             }
@@ -262,12 +297,18 @@ private fun MiniMonthContent(
     val cells = buildMonthCells(yearMonth, firstDow)
     val weeks = cells.chunked(7)
 
-    // Compact header so 5–6 equal-weight week rows always fit without clipping.
     Column(modifier = GlanceModifier.fillMaxSize()) {
         MonthHeader(yearMonth = yearMonth, locale = locale)
         Spacer(modifier = GlanceModifier.height(4.dp))
-        WeekdayRow(firstDayOfWeek = firstDow, locale = locale)
-        Spacer(modifier = GlanceModifier.height(2.dp))
+        WeekdayRow(
+            firstDayOfWeek = firstDow,
+            locale = locale,
+            threeLetter = true,
+            gap = MonthDayGap,
+            rowHeight = 16.dp,
+            fontSize = 10.sp,
+        )
+        Spacer(modifier = GlanceModifier.height(4.dp))
         Column(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
             weeks.forEachIndexed { wIndex, week ->
                 if (wIndex > 0) {
@@ -291,9 +332,8 @@ private fun MiniMonthContent(
                             type = type,
                             colors = type?.let { colorCache[it.id] },
                             showTypeLabel = false,
-                            numberFontSize = 10.sp,
+                            numberFontSize = 12.sp,
                             corner = MonthDayCorner,
-                            inset = MonthDayCellInset,
                             modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
                         )
                     }
@@ -312,6 +352,7 @@ private fun WeekHeader(weekStart: LocalDate, weekEnd: LocalDate, locale: Locale)
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
+            .height(HeaderRowHeight)
             .clickable(openCalendar),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -319,19 +360,13 @@ private fun WeekHeader(weekStart: LocalDate, weekEnd: LocalDate, locale: Locale)
             text = range,
             style = TextStyle(
                 color = GlanceTheme.colors.onSurface,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
             ),
             modifier = GlanceModifier.defaultWeight(),
+            maxLines = 1,
         )
-        Text(
-            text = LocalContext.current.getString(R.string.app_name),
-            style = TextStyle(
-                color = GlanceTheme.colors.onSurfaceVariant,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Normal,
-            ),
-        )
+        OpenPill(openCalendar)
     }
 }
 
@@ -346,6 +381,7 @@ private fun MonthHeader(yearMonth: YearMonth, locale: Locale) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
+            .height(HeaderRowHeight)
             .clickable(openCalendar),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -353,39 +389,45 @@ private fun MonthHeader(yearMonth: YearMonth, locale: Locale) {
             text = title,
             style = TextStyle(
                 color = GlanceTheme.colors.onSurface,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
             ),
             modifier = GlanceModifier.defaultWeight(),
+            maxLines = 1,
         )
-        Text(
-            text = LocalContext.current.getString(R.string.app_name),
-            style = TextStyle(
-                color = GlanceTheme.colors.onSurfaceVariant,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Normal,
-            ),
-        )
+        OpenPill(openCalendar)
     }
 }
 
 @Composable
-private fun WeekdayRow(firstDayOfWeek: DayOfWeek, locale: Locale) {
-    val initials = weekdayInitials(firstDayOfWeek, locale)
-    Row(modifier = GlanceModifier.fillMaxWidth().height(16.dp)) {
-        initials.forEachIndexed { index, label ->
+private fun WeekdayRow(
+    firstDayOfWeek: DayOfWeek,
+    locale: Locale,
+    threeLetter: Boolean,
+    gap: Dp,
+    rowHeight: Dp,
+    fontSize: TextUnit,
+) {
+    val labels = if (threeLetter) {
+        weekdayShortLabels(firstDayOfWeek, locale)
+    } else {
+        weekdayInitials(firstDayOfWeek, locale)
+    }
+    Row(modifier = GlanceModifier.fillMaxWidth().height(rowHeight)) {
+        labels.forEachIndexed { index, label ->
             if (index > 0) {
-                Spacer(modifier = GlanceModifier.width(MonthDayGap))
+                Spacer(modifier = GlanceModifier.width(gap))
             }
             Text(
                 text = label,
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurfaceVariant,
-                    fontSize = 9.sp,
+                    fontSize = fontSize,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 ),
                 modifier = GlanceModifier.defaultWeight(),
+                maxLines = 1,
             )
         }
     }
@@ -401,7 +443,6 @@ private fun DayCell(
     showTypeLabel: Boolean,
     numberFontSize: TextUnit,
     corner: Dp,
-    inset: Dp,
     modifier: GlanceModifier,
 ) {
     val hasWorkout = type != null && colors != null && !isOutsideMonth
@@ -418,20 +459,13 @@ private fun DayCell(
     val emptyFillNight = emptyCellFill(dark = true).let {
         if (isOutsideMonth) it.copy(alpha = 0.50f) else it
     }
-    val fillProvider: GlanceColorProvider = when {
-        hasWorkout -> ColorProvider(
-            day = colors!!.containerDay,
-            night = colors.containerNight,
-        )
-        else -> ColorProvider(
-            day = emptyFillDay,
-            night = emptyFillNight,
-        )
-    }
-
-    val strokeProvider: GlanceColorProvider = ColorProvider(
-        day = emptyCellStroke(dark = false),
-        night = emptyCellStroke(dark = true),
+    val typeFillProvider: GlanceColorProvider = ColorProvider(
+        day = colors?.containerDay ?: emptyFillDay,
+        night = colors?.containerNight ?: emptyFillNight,
+    )
+    val emptyFillProvider: GlanceColorProvider = ColorProvider(
+        day = emptyFillDay,
+        night = emptyFillNight,
     )
 
     val onProvider: GlanceColorProvider = when {
@@ -439,11 +473,11 @@ private fun DayCell(
             day = outsideDayOnColor(false),
             night = outsideDayOnColor(true),
         )
+        isToday && !hasWorkout -> GlanceTheme.colors.onPrimary
         hasWorkout -> ColorProvider(
             day = colors!!.onContainerDay,
             night = colors.onContainerNight,
         )
-        isToday -> GlanceTheme.colors.primary
         else -> ColorProvider(
             day = emptyCellOnColor(false),
             night = emptyCellOnColor(true),
@@ -458,64 +492,78 @@ private fun DayCell(
         if (isToday) append(", ${ctx.getString(R.string.widget_a11y_today)}")
     }
 
-    // Inset before background so colored rect is ~80% of grid slot (Glance has no scale).
-    // Variant D: empty cells get outlineVariant 1 dp; today keeps primary 2 dp.
-    val innerCorner = (corner.value - if (isToday) TodayStroke.value else if (!hasWorkout) EmptyStroke.value else 0f)
-        .coerceAtLeast(2f).dp
-    val cellModifier = when {
-        isToday -> GlanceModifier
-            .then(modifier)
-            .padding(inset)
-            .cornerRadius(corner)
-            .background(GlanceTheme.colors.primary)
-            .padding(TodayStroke)
-            .semantics { contentDescription = desc }
-            .clickable(openDay)
-        !hasWorkout -> GlanceModifier
-            .then(modifier)
-            .padding(inset)
-            .cornerRadius(corner)
-            .background(strokeProvider)
-            .padding(EmptyStroke)
-            .semantics { contentDescription = desc }
-            .clickable(openDay)
-        else -> GlanceModifier
-            .then(modifier)
-            .padding(inset)
-            .cornerRadius(corner)
-            .background(fillProvider)
-            .semantics { contentDescription = desc }
-            .clickable(openDay)
+    val label: @Composable () -> Unit = {
+        DayCellLabel(
+            day = date.dayOfMonth,
+            typeName = typeName,
+            showTypeLabel = showTypeLabel && hasWorkout,
+            numberFontSize = numberFontSize,
+            onProvider = onProvider,
+        )
     }
 
-        Box(
-        modifier = cellModifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        if (isToday || !hasWorkout) {
+    when {
+        // Today empty: primary filled circle + onPrimary number.
+        isToday && !hasWorkout -> {
             Box(
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .cornerRadius(innerCorner)
-                    .background(fillProvider),
+                modifier = modifier
+                    .cornerRadius(CircleCorner)
+                    .background(GlanceTheme.colors.primary)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
                 contentAlignment = Alignment.Center,
             ) {
-                DayCellLabel(
-                    day = date.dayOfMonth,
-                    typeName = typeName,
-                    showTypeLabel = showTypeLabel && hasWorkout,
-                    numberFontSize = numberFontSize,
-                    onProvider = onProvider,
-                )
+                label()
             }
-        } else {
-            DayCellLabel(
-                day = date.dayOfMonth,
-                typeName = typeName,
-                showTypeLabel = showTypeLabel && hasWorkout,
-                numberFontSize = numberFontSize,
-                onProvider = onProvider,
-            )
+        }
+        // Today assigned: type fill + primary ring 2–3 dp.
+        isToday && hasWorkout -> {
+            val innerCorner = (corner.value - TodayRing.value).coerceAtLeast(2f).dp
+            Box(
+                modifier = modifier
+                    .cornerRadius(corner)
+                    .background(GlanceTheme.colors.primary)
+                    .padding(TodayRing)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = GlanceModifier
+                        .fillMaxSize()
+                        .cornerRadius(innerCorner)
+                        .background(typeFillProvider),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    label()
+                }
+            }
+        }
+        // Assigned (not today): type tonal fill, no stroke.
+        hasWorkout -> {
+            Box(
+                modifier = modifier
+                    .cornerRadius(corner)
+                    .background(typeFillProvider)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
+                contentAlignment = Alignment.Center,
+            ) {
+                label()
+            }
+        }
+        // Empty (incl. outside): surfaceContainerHighest, no stroke.
+        else -> {
+            Box(
+                modifier = modifier
+                    .cornerRadius(corner)
+                    .background(emptyFillProvider)
+                    .semantics { contentDescription = desc }
+                    .clickable(openDay),
+                contentAlignment = Alignment.Center,
+            ) {
+                label()
+            }
         }
     }
 }
@@ -609,6 +657,29 @@ private fun weekdayInitials(firstDayOfWeek: DayOfWeek, locale: Locale): List<Str
             DateTimeFormatter.ofPattern("EEEEE", locale).format(
                 LocalDate.now().with(TemporalAdjusters.nextOrSame(dow)),
             )
+        }
+    }
+}
+
+/** Month: 3-letter weekday labels (Mon… / Pon…). */
+private fun weekdayShortLabels(firstDayOfWeek: DayOfWeek, locale: Locale): List<String> {
+    val pl = mapOf(
+        DayOfWeek.MONDAY to "Pon",
+        DayOfWeek.TUESDAY to "Wto",
+        DayOfWeek.WEDNESDAY to "Śro",
+        DayOfWeek.THURSDAY to "Czw",
+        DayOfWeek.FRIDAY to "Pią",
+        DayOfWeek.SATURDAY to "Sob",
+        DayOfWeek.SUNDAY to "Nie",
+    )
+    return (0..6).map { offset ->
+        val dow = firstDayOfWeek.plus(offset.toLong())
+        if (locale.language == "pl") {
+            pl[dow] ?: dow.name.take(3)
+        } else {
+            DateTimeFormatter.ofPattern("EEE", locale).format(
+                LocalDate.now().with(TemporalAdjusters.nextOrSame(dow)),
+            ).trimEnd('.').replaceFirstChar { it.titlecase(locale) }
         }
     }
 }

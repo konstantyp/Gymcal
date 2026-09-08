@@ -7,7 +7,8 @@ import com.konstantyp.gymcal.ui.theme.runtimeColorsForSeed
  * Widget type colors: same pre-31 / no-wallpaper path as the app
  * (light ≈ seed, dark ≈ lightened tonal). No dynamic wallpaper harmonize.
  *
- * Empty / outside tokens: DesignBot Variant D (surfaceContainerLowest + outlineVariant).
+ * Empty / outside tokens: DesignBot GCal-like BINDING
+ * (surfaceContainerHighest, no stroke).
  */
 data class WidgetTypeColors(
     val containerDay: Color,
@@ -27,15 +28,11 @@ fun widgetColorsForSeed(seedArgb: Long): WidgetTypeColors {
     )
 }
 
-/** Empty fill: surfaceContainerLowest (Variant D). */
+/** Empty fill: surfaceContainerHighest (GCal-like chocolate-bar). */
 fun emptyCellFill(dark: Boolean): Color =
-    if (dark) Color(0xFF0F0D13) else Color(0xFFFFFFFF)
+    if (dark) Color(0xFF36343B) else Color(0xFFE6E0E9)
 
-/** Empty stroke: outlineVariant (Variant D). */
-fun emptyCellStroke(dark: Boolean): Color =
-    if (dark) Color(0xFF49454F) else Color(0xFFCAC4D0)
-
-/** Empty day number: onSurfaceVariant (Variant D). */
+/** Empty day number: onSurfaceVariant. */
 fun emptyCellOnColor(dark: Boolean): Color =
     if (dark) Color(0xFFCAC4D0) else Color(0xFF49454F)
 

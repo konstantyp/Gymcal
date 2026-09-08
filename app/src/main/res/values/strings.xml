@@ -87,6 +87,7 @@
     <string name="widget_month_label">Liftloq — month</string>
     <string name="widget_month_description">Colorful training month</string>
     <string name="widget_open_gymcal">Open Liftloq</string>
+    <string name="widget_open">Open</string>
     <string name="add_workout">Add workout</string>
     <string name="widget_a11y_none">none</string>
     <string name="widget_a11y_today">today</string>
