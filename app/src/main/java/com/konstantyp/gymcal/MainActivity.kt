@@ -184,13 +184,18 @@ private fun GymcalRoot(
                         types = types,
                         onBack = { navController.popBackStack() },
                         onAdd = { name, seedArgb ->
-                            repository.addType(name, seedArgb).map { }
+                            repository.addType(name, seedArgb).map { }.also {
+                                GymcalWidgetUpdater.requestUpdateAsync(context)
+                            }
                         },
                         onUpdate = { id, name, seedArgb ->
-                            repository.updateType(id, name, seedArgb)
+                            repository.updateType(id, name, seedArgb).also {
+                                GymcalWidgetUpdater.requestUpdateAsync(context)
+                            }
                         },
                         onDelete = { id ->
                             repository.deleteType(id)
+                            GymcalWidgetUpdater.requestUpdateAsync(context)
                         },
                     )
                 }

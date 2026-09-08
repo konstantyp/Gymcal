@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.konstantyp.gymcal.R
 import com.konstantyp.gymcal.data.LocalePreferences
+import com.konstantyp.gymcal.widget.GymcalWidgetUpdater
 import com.konstantyp.gymcal.data.WorkoutRepository
 import java.io.File
 import java.time.LocalDate
@@ -298,6 +299,9 @@ fun SettingsScreen(
                         scope.launch {
                             val result = withContext(Dispatchers.IO) {
                                 repository.importPlanJson(json)
+                            }
+                            if (result.isSuccess) {
+                                GymcalWidgetUpdater.requestUpdateAsync(context)
                             }
                             snackbarHostState.showSnackbar(
                                 if (result.isSuccess) {
