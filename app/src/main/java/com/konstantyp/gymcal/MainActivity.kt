@@ -161,7 +161,7 @@ private fun GymcalRoot(
                         onBack = { navController.popBackStack() },
                         onSave = { typeIds ->
                             scope.launch {
-                                repository.setWorkouts(date, typeIds)
+                                repository.setWorkout(date, typeIds)
                                 // Belt-and-suspenders: app-scoped async if composition tears down
                                 GymcalWidgetUpdater.requestUpdateAsync(context)
                                 navController.popBackStack()

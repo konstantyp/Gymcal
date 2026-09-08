@@ -71,7 +71,7 @@ class WorkoutRepository(private val context: Context) {
 
     /** Replace day slots with up to [MAX_WORKOUTS_PER_DAY] ordered type ids. Empty clears. */
     suspend fun setWorkouts(date: LocalDate, typeIds: List<String>) {
-        val cleaned = typeIds.map { it.trim() }.filter { it.isNotEmpty() }.take(MAX_WORKOUTS_PER_DAY)
+        val cleaned = typeIds.map { it.trim() }.filter { it.isNotEmpty() }.distinct().take(MAX_WORKOUTS_PER_DAY)
         context.workoutDataStore.edit { prefs ->
             migrateLocked(prefs)
             val key = stringPreferencesKey(date.toString())
@@ -85,6 +85,11 @@ class WorkoutRepository(private val context: Context) {
         GymcalWidgetUpdater.requestUpdate(context)
     }
 
+    /** Assign 0–2 ordered type ids (BINDING API). Empty clears. */
+    suspend fun setWorkout(date: LocalDate, typeIds: List<String>) {
+        setWorkouts(date, typeIds)
+    }
+
     /** Convenience: single-slot assignment (replaces any existing slots). */
     suspend fun setWorkout(date: LocalDate, typeId: String) {
         setWorkouts(date, listOf(typeId))
@@ -92,6 +97,22 @@ class WorkoutRepository(private val context: Context) {
 
     suspend fun clearWorkout(date: LocalDate) {
         setWorkouts(date, emptyList())
+    }
+
+    /** Append [typeId] as next slot if under max; no-op if already present or full. */
+    suspend fun addWorkoutSlot(date: LocalDate, typeId: String) {
+        val id = typeId.trim()
+        if (id.isEmpty()) return
+        val current = workouts.first()[date].orEmpty()
+        if (id in current || current.size >= MAX_WORKOUTS_PER_DAY) return
+        setWorkouts(date, current + id)
+    }
+
+    /** Remove [typeId] from the day's ordered slots (if present). */
+    suspend fun removeWorkoutSlot(date: LocalDate, typeId: String) {
+        val current = workouts.first()[date].orEmpty()
+        if (typeId !in current) return
+        setWorkouts(date, current.filterNot { it == typeId })
     }
 
     suspend fun addType(name: String, seedArgb: Long): Result<WorkoutType> {
