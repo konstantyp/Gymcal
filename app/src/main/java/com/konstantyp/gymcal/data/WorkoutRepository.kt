@@ -69,6 +69,8 @@ class WorkoutRepository(private val context: Context) {
         context.workoutDataStore.edit { prefs ->
             prefs[stringPreferencesKey(date.toString())] = typeId
         }
+        // Ensure Flow snapshot is committed before Glance re-reads .first()
+        workouts.first()
         GymcalWidgetUpdater.requestUpdate(context)
     }
 
@@ -76,6 +78,7 @@ class WorkoutRepository(private val context: Context) {
         context.workoutDataStore.edit { prefs ->
             prefs.remove(stringPreferencesKey(date.toString()))
         }
+        workouts.first()
         GymcalWidgetUpdater.requestUpdate(context)
     }
 
@@ -108,6 +111,7 @@ class WorkoutRepository(private val context: Context) {
                 prefs[KEY_TYPES] = serializeTypes(current)
                 created = type
             }
+            types.first()
             GymcalWidgetUpdater.requestUpdate(context)
             Result.success(created!!)
         } catch (e: Exception) {
@@ -134,6 +138,7 @@ class WorkoutRepository(private val context: Context) {
                 current[idx] = current[idx].copy(name = trimmed, seedArgb = seedArgb)
                 prefs[KEY_TYPES] = serializeTypes(current)
             }
+            types.first()
             GymcalWidgetUpdater.requestUpdate(context)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -152,6 +157,8 @@ class WorkoutRepository(private val context: Context) {
             }
             toRemove.forEach { prefs.remove(it) }
         }
+        types.first()
+        workouts.first()
         GymcalWidgetUpdater.requestUpdate(context)
     }
 
@@ -207,6 +214,8 @@ class WorkoutRepository(private val context: Context) {
                     prefs[stringPreferencesKey(date.toString())] = typeId
                 }
             }
+            types.first()
+            workouts.first()
             GymcalWidgetUpdater.requestUpdate(context)
             Result.success(Unit)
         } catch (e: Exception) {
