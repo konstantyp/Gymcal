@@ -6,6 +6,8 @@ import com.konstantyp.gymcal.ui.theme.runtimeColorsForSeed
 /**
  * Widget type colors: same pre-31 / no-wallpaper path as the app
  * (light ≈ seed, dark ≈ lightened tonal). No dynamic wallpaper harmonize.
+ *
+ * Empty / outside tokens: DesignBot Variant D (surfaceContainerLowest + outlineVariant).
  */
 data class WidgetTypeColors(
     val containerDay: Color,
@@ -25,16 +27,18 @@ fun widgetColorsForSeed(seedArgb: Long): WidgetTypeColors {
     )
 }
 
-/** Empty day number: onSurface bases @ 68% alpha. */
-fun emptyCellOnColor(dark: Boolean): Color =
-    if (dark) Color(0xFFE6E1E5).copy(alpha = 0.68f)
-    else Color(0xFF1D1B20).copy(alpha = 0.68f)
-
-/** Outside-month number: onSurface @ 38% opacity. */
-fun outsideDayOnColor(dark: Boolean): Color =
-    if (dark) Color(0xFFE6E1E5).copy(alpha = 0.38f)
-    else Color(0xFF1D1B20).copy(alpha = 0.38f)
-
-/** Empty fill: primaryContainer-tint (not flat gray). */
+/** Empty fill: surfaceContainerLowest (Variant D). */
 fun emptyCellFill(dark: Boolean): Color =
-    if (dark) Color(0xFF4A4458) else Color(0xFFE8DEF8)
+    if (dark) Color(0xFF0F0D13) else Color(0xFFFFFFFF)
+
+/** Empty stroke: outlineVariant (Variant D). */
+fun emptyCellStroke(dark: Boolean): Color =
+    if (dark) Color(0xFF49454F) else Color(0xFFCAC4D0)
+
+/** Empty day number: onSurfaceVariant (Variant D). */
+fun emptyCellOnColor(dark: Boolean): Color =
+    if (dark) Color(0xFFCAC4D0) else Color(0xFF49454F)
+
+/** Outside-month number: empty number @ 38% opacity. */
+fun outsideDayOnColor(dark: Boolean): Color =
+    emptyCellOnColor(dark).copy(alpha = 0.38f)

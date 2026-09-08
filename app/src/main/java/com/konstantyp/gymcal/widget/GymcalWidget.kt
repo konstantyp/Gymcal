@@ -141,6 +141,7 @@ private val MonthDayCorner = 5.dp
 private val MonthDayCellInset = 2.dp
 private val HeaderGap = 8.dp
 private val TodayStroke = 2.dp
+private val EmptyStroke = 1.dp
 
 @Composable
 private fun WidgetRoot(
@@ -428,6 +429,11 @@ private fun DayCell(
         )
     }
 
+    val strokeProvider: GlanceColorProvider = ColorProvider(
+        day = emptyCellStroke(dark = false),
+        night = emptyCellStroke(dark = true),
+    )
+
     val onProvider: GlanceColorProvider = when {
         isOutsideMonth -> ColorProvider(
             day = outsideDayOnColor(false),
@@ -453,8 +459,11 @@ private fun DayCell(
     }
 
     // Inset before background so colored rect is ~80% of grid slot (Glance has no scale).
-    val cellModifier = if (isToday) {
-        GlanceModifier
+    // Variant D: empty cells get outlineVariant 1 dp; today keeps primary 2 dp.
+    val innerCorner = (corner.value - if (isToday) TodayStroke.value else if (!hasWorkout) EmptyStroke.value else 0f)
+        .coerceAtLeast(2f).dp
+    val cellModifier = when {
+        isToday -> GlanceModifier
             .then(modifier)
             .padding(inset)
             .cornerRadius(corner)
@@ -462,8 +471,15 @@ private fun DayCell(
             .padding(TodayStroke)
             .semantics { contentDescription = desc }
             .clickable(openDay)
-    } else {
-        GlanceModifier
+        !hasWorkout -> GlanceModifier
+            .then(modifier)
+            .padding(inset)
+            .cornerRadius(corner)
+            .background(strokeProvider)
+            .padding(EmptyStroke)
+            .semantics { contentDescription = desc }
+            .clickable(openDay)
+        else -> GlanceModifier
             .then(modifier)
             .padding(inset)
             .cornerRadius(corner)
@@ -472,15 +488,15 @@ private fun DayCell(
             .clickable(openDay)
     }
 
-    Box(
+        Box(
         modifier = cellModifier,
         contentAlignment = Alignment.Center,
     ) {
-        if (isToday) {
+        if (isToday || !hasWorkout) {
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .cornerRadius((corner.value - TodayStroke.value).coerceAtLeast(2f).dp)
+                    .cornerRadius(innerCorner)
                     .background(fillProvider),
                 contentAlignment = Alignment.Center,
             ) {
