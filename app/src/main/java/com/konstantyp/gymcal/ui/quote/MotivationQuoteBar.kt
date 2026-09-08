@@ -3,11 +3,11 @@ package com.konstantyp.gymcal.ui.quote
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -22,21 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.data.MotivationQuote
 import com.konstantyp.gymcal.data.QuoteRepository
 
-/** Hard palette — BINDING quote-bar-A (same five blues as widget D). */
-private val Navy = Color(0xFF003366)
-private val Steel = Color(0xFF336699)
-private val Ice = Color(0xFFCCFFFF)
-
 /**
- * Motivation quote bar Variant A. Hidden until a successful fetch;
- * offline/fail → stays hidden (no error UI). CalendarScreen only.
+ * Motivation quote bar Variant A (tonal-fill delta).
+ * Fill matches FilledTonalButton secondaryContainer. Hidden until success.
  */
 @Composable
 fun MotivationQuoteBar(modifier: Modifier = Modifier) {
@@ -47,21 +41,22 @@ fun MotivationQuoteBar(modifier: Modifier = Modifier) {
     }
 
     val q = quote ?: return
-
+    val scheme = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(20.dp)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .heightIn(min = 96.dp, max = 220.dp)
             .clip(shape)
-            .background(Ice),
+            .background(scheme.secondaryContainer),
     ) {
         Box(
             modifier = Modifier
                 .width(6.dp)
                 .fillMaxHeight()
-                .background(Steel),
+                .background(scheme.secondary),
         )
         Column(
             modifier = Modifier
@@ -71,14 +66,14 @@ fun MotivationQuoteBar(modifier: Modifier = Modifier) {
             Text(
                 text = "“${q.text}”",
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                color = Navy,
+                color = scheme.onSecondaryContainer,
                 maxLines = 5,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = "— ${q.author} · zenquotes.io",
                 style = MaterialTheme.typography.labelSmall,
-                color = Steel,
+                color = scheme.onSecondaryContainer.copy(alpha = 0.70f),
                 modifier = Modifier.padding(top = 10.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

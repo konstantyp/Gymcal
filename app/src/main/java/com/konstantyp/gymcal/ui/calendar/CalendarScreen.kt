@@ -173,8 +173,6 @@ fun CalendarScreen(
                 types = types,
                 onManageTypes = onManageTypes,
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            MotivationQuoteBar()
             if (!hasWorkoutsThisMonth) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -183,6 +181,8 @@ fun CalendarScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            MotivationQuoteBar()
         }
     }
 }
