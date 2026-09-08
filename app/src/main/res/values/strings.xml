@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gymcal</string>
+
+    <!-- Settings / i18n (DesignBot delta) -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_language">Language</string>
+    <string name="lang_en">English</string>
+    <string name="lang_pl">Polski</string>
+    <string name="lang_de">Deutsch</string>
+    <string name="cd_settings">Settings</string>
+
+    <!-- Workout plan export/import -->
+    <string name="settings_workout_plan">Workout plan</string>
+    <string name="export_workout_plan">Export workout plan</string>
+    <string name="import_workout_plan">Import workout plan</string>
+    <string name="import_replace_title">Replace current plan?</string>
+    <string name="import_replace_body">Replace all workout types and calendar entries with this file?</string>
+    <string name="import_replace_confirm">Replace</string>
+    <string name="export_success">Workout plan exported</string>
+    <string name="import_success">Workout plan imported</string>
+    <string name="export_failed">Could not export workout plan</string>
+    <string name="import_failed">Could not import workout plan</string>
+    <string name="import_invalid_json">Invalid workout plan file</string>
+    <string name="import_too_many_types">Maximum %1$d types</string>
+
+    <!-- Calendar -->
+    <string name="types_cta">Workout types</string>
+    <string name="cd_previous_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+    <string name="empty_month">No workouts this month. Tap a day to add one.</string>
+    <string name="legend_empty">No workout types — add in Workout types</string>
+    <string name="cd_back">Back</string>
+    <string name="a11y_today">today</string>
+    <string name="a11y_no_workout">no workout</string>
+    <string name="a11y_outside_month">outside month</string>
+    <string-array name="weekday_short">
+        <item>Mon</item><item>Tue</item><item>Wed</item><item>Thu</item>
+        <item>Fri</item><item>Sat</item><item>Sun</item>
+    </string-array>
+
+    <!-- Day detail -->
+    <string name="workout_section">Workout</string>
+    <string name="no_types_mark_day">No workout types. Add a type to mark this day.</string>
+    <string name="add_type">Add type</string>
+    <string name="manage_types">Manage types</string>
+    <string name="save">Save</string>
+    <string name="clear_day">Clear day</string>
+
+    <!-- Types -->
+    <string name="types_title">Workout types</string>
+    <string name="cd_add_type">Add type</string>
+    <string name="types_empty">No workout types. Add the first type.</string>
+    <string name="add_first_type">Add first type</string>
+    <string name="cd_delete_type">Delete %1$s</string>
+    <string name="delete_type_title">Delete type?</string>
+    <string name="delete_type_body">Delete “%1$s”? Workouts of this type will disappear from the calendar.</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="new_type">New type</string>
+    <string name="edit_type">Edit type</string>
+    <string name="name_label">Name</string>
+    <string name="color_label">Color</string>
+    <string name="error_name_empty">Name cannot be empty</string>
+    <string name="error_name_max">Max. %1$d characters</string>
+    <string name="error_name_exists">A type with this name already exists</string>
+    <string name="error_name_length">Name must be 1–%1$d characters</string>
+    <string name="error_max_types">Maximum %1$d types</string>
+    <string name="error_type_missing">Type does not exist</string>
+
+    <!-- Color picker -->
+    <string name="cd_color_wheel">Color wheel</string>
+    <string name="cd_color_preview">Color preview</string>
+    <string name="hue_label">Hue</string>
+    <string name="saturation_label">Saturation</string>
+    <string name="value_label">Brightness</string>
+    <string name="cd_color_hs">Color H%1$d S%2$d</string>
+    <string-array name="color_preset_names">
+        <item>Orange</item><item>Amber</item><item>Gold</item><item>Green</item>
+        <item>Teal</item><item>Blue</item><item>Indigo</item><item>Violet</item>
+        <item>Magenta</item><item>Rose</item><item>Stone</item><item>Graphite</item>
+    </string-array>
+
+    <!-- Widgets -->
+    <string name="widget_week_label">Gymcal — week</string>
+    <string name="widget_week_description">Colorful training week</string>
+    <string name="widget_month_label">Gymcal — month</string>
+    <string name="widget_month_description">Colorful training month</string>
+    <string name="widget_open_gymcal">Open Gymcal</string>
+    <string name="add_workout">Add workout</string>
+    <string name="widget_a11y_none">none</string>
+    <string name="widget_a11y_today">today</string>
+</resources>

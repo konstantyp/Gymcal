@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gymcal</string>
+    <string name="settings_title">Ustawienia</string>
+    <string name="settings_language">Język</string>
+    <string name="lang_en">English</string>
+    <string name="lang_pl">Polski</string>
+    <string name="lang_de">Deutsch</string>
+    <string name="cd_settings">Ustawienia</string>
+    <string name="settings_workout_plan">Plan treningowy</string>
+    <string name="export_workout_plan">Eksportuj plan treningowy</string>
+    <string name="import_workout_plan">Importuj plan treningowy</string>
+    <string name="import_replace_title">Zastąpić obecny plan?</string>
+    <string name="import_replace_body">Zastąpić wszystkie typy treningów i wpisy w kalendarzu zawartością tego pliku?</string>
+    <string name="import_replace_confirm">Zastąp</string>
+    <string name="export_success">Plan treningowy wyeksportowany</string>
+    <string name="import_success">Plan treningowy zaimportowany</string>
+    <string name="export_failed">Nie udało się wyeksportować planu</string>
+    <string name="import_failed">Nie udało się zaimportować planu</string>
+    <string name="import_invalid_json">Nieprawidłowy plik planu treningowego</string>
+    <string name="import_too_many_types">Maksymalnie %1$d typów</string>
+    <string name="types_cta">Typy treningów</string>
+    <string name="cd_previous_month">Poprzedni miesiąc</string>
+    <string name="cd_next_month">Następny miesiąc</string>
+    <string name="empty_month">Brak treningów w tym miesiącu. Wybierz dzień, aby dodać.</string>
+    <string name="legend_empty">Brak typów treningów — dodaj w Typach treningów</string>
+    <string name="cd_back">Wstecz</string>
+    <string name="a11y_today">dziś</string>
+    <string name="a11y_no_workout">brak treningu</string>
+    <string name="a11y_outside_month">poza miesiącem</string>
+    <string-array name="weekday_short">
+        <item>PN</item><item>WT</item><item>ŚR</item><item>CZ</item>
+        <item>PT</item><item>SO</item><item>ND</item>
+    </string-array>
+    <string name="workout_section">Trening</string>
+    <string name="no_types_mark_day">Brak typów treningów. Dodaj typ, aby oznaczyć dzień.</string>
+    <string name="add_type">Dodaj typ</string>
+    <string name="manage_types">Zarządzaj typami</string>
+    <string name="save">Zapisz</string>
+    <string name="clear_day">Wyczyść dzień</string>
+    <string name="types_title">Typy treningów</string>
+    <string name="cd_add_type">Dodaj typ</string>
+    <string name="types_empty">Brak typów treningów. Dodaj pierwszy typ.</string>
+    <string name="add_first_type">Dodaj pierwszy typ</string>
+    <string name="cd_delete_type">Usuń %1$s</string>
+    <string name="delete_type_title">Usunąć typ?</string>
+    <string name="delete_type_body">Usunąć „%1$s”? Treningi tego typu znikną z kalendarza.</string>
+    <string name="delete">Usuń</string>
+    <string name="cancel">Anuluj</string>
+    <string name="new_type">Nowy typ</string>
+    <string name="edit_type">Edytuj typ</string>
+    <string name="name_label">Nazwa</string>
+    <string name="color_label">Kolor</string>
+    <string name="error_name_empty">Nazwa nie może być pusta</string>
+    <string name="error_name_max">Maks. %1$d znaków</string>
+    <string name="error_name_exists">Typ o tej nazwie już istnieje</string>
+    <string name="error_name_length">Nazwa musi mieć 1–%1$d znaków</string>
+    <string name="error_max_types">Maksymalnie %1$d typów</string>
+    <string name="error_type_missing">Typ nie istnieje</string>
+    <string name="cd_color_wheel">Koło kolorów</string>
+    <string name="cd_color_preview">Podgląd koloru</string>
+    <string name="hue_label">Odcień</string>
+    <string name="saturation_label">Nasycenie</string>
+    <string name="value_label">Jasność</string>
+    <string name="cd_color_hs">Kolor H%1$d S%2$d</string>
+    <string-array name="color_preset_names">
+        <item>Pomarańcz</item><item>Bursztyn</item><item>Złoto</item><item>Zieleń</item>
+        <item>Teal</item><item>Błękit</item><item>Indigo</item><item>Fiolet</item>
+        <item>Magenta</item><item>Róż</item><item>Kamień</item><item>Grafit</item>
+    </string-array>
+    <string name="widget_week_label">Gymcal — tydzień</string>
+    <string name="widget_week_description">Kolorowy tydzień treningów</string>
+    <string name="widget_month_label">Gymcal — miesiąc</string>
+    <string name="widget_month_description">Kolorowy miesiąc treningów</string>
+    <string name="widget_open_gymcal">Otwórz Gymcal</string>
+    <string name="add_workout">Dodaj trening</string>
+    <string name="widget_a11y_none">brak</string>
+    <string name="widget_a11y_today">dziś</string>
+</resources>
