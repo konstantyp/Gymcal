@@ -263,12 +263,15 @@ private fun WeekStripContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             days.forEachIndexed { index, date ->
-                if (index > 0) {
-                    Spacer(modifier = GlanceModifier.width(DayGap))
-                }
                 val typeIds = workouts[date].orEmpty().take(2)
                 val types = typeIds.mapNotNull { typesById[it] }
                 val colors = types.mapNotNull { colorCache[it.id] }
+                // Gap via start padding — no Spacer siblings (Glance can zero later weights).
+                val cellMod = if (index > 0) {
+                    GlanceModifier.padding(start = DayGap).defaultWeight().fillMaxHeight()
+                } else {
+                    GlanceModifier.defaultWeight().fillMaxHeight()
+                }
                 DayCell(
                     date = date,
                     isToday = date == today,
@@ -278,7 +281,7 @@ private fun WeekStripContent(
                     showTypeLabel = showTypeLabels,
                     numberFontSize = 14.sp,
                     corner = DayCorner,
-                    modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+                    modifier = cellMod,
                 )
             }
         }
@@ -321,13 +324,15 @@ private fun MiniMonthContent(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     week.forEachIndexed { index, date ->
-                        if (index > 0) {
-                            Spacer(modifier = GlanceModifier.width(MonthDayGap))
-                        }
                         val outside = date.month != yearMonth.month
                         val typeIds = if (outside) emptyList() else workouts[date].orEmpty().take(2)
                         val types = typeIds.mapNotNull { typesById[it] }
                         val colors = types.mapNotNull { colorCache[it.id] }
+                        val cellMod = if (index > 0) {
+                            GlanceModifier.padding(start = MonthDayGap).defaultWeight().fillMaxHeight()
+                        } else {
+                            GlanceModifier.defaultWeight().fillMaxHeight()
+                        }
                         DayCell(
                             date = date,
                             isToday = date == today && !outside,
@@ -337,7 +342,7 @@ private fun MiniMonthContent(
                             showTypeLabel = false,
                             numberFontSize = 12.sp,
                             corner = MonthDayCorner,
-                            modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+                            modifier = cellMod,
                         )
                     }
                 }
@@ -418,8 +423,10 @@ private fun WeekdayRow(
     }
     Row(modifier = GlanceModifier.fillMaxWidth().height(rowHeight)) {
         labels.forEachIndexed { index, label ->
-            if (index > 0) {
-                Spacer(modifier = GlanceModifier.width(gap))
+            val labelMod = if (index > 0) {
+                GlanceModifier.padding(start = gap).defaultWeight()
+            } else {
+                GlanceModifier.defaultWeight()
             }
             Text(
                 text = label,
@@ -429,7 +436,7 @@ private fun WeekdayRow(
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 ),
-                modifier = GlanceModifier.defaultWeight(),
+                modifier = labelMod,
                 maxLines = 1,
             )
         }
