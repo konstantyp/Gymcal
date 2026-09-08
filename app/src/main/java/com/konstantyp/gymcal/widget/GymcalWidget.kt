@@ -301,6 +301,14 @@ private fun MiniMonthContent(
     val yearMonth = YearMonth.from(today)
     val cells = buildMonthCells(yearMonth, firstDow)
     val weeks = cells.chunked(7)
+    val size = LocalSize.current
+    val weekRows = weeks.size.coerceAtLeast(1)
+    // Header + weekday + gaps; remaining height split across week rows.
+    val monthCellHeight = (
+        size.height - WidgetPadding * 2 - HeaderRowHeight - 16.dp - 4.dp - 4.dp -
+            MonthDayGap * (weekRows - 1)
+        ) / weekRows
+    val showTypeLabels = monthCellHeight >= TypeLabelMinCellHeight
 
     Column(modifier = GlanceModifier.fillMaxSize()) {
         MonthHeader(yearMonth = yearMonth, locale = locale)
@@ -339,7 +347,7 @@ private fun MiniMonthContent(
                             isOutsideMonth = outside,
                             types = types,
                             colors = colors,
-                            showTypeLabel = true,
+                            showTypeLabel = showTypeLabels,
                             numberFontSize = 12.sp,
                             corner = MonthDayCorner,
                             modifier = cellMod,
@@ -518,14 +526,14 @@ private fun DayCell(
         DayCellLabel(
             day = date.dayOfMonth,
             typeName = typeName,
-            // Dual labels live in each half (BINDING widget-type-labels); single under number.
+            // Dual labels live in each half (BINDING dual-labels); single under number.
             showTypeLabel = showTypeLabel && slotCount == 1,
             numberFontSize = numberFontSize,
             onProvider = onProvider,
         )
     }
 
-    // Dual B: type name in each half (BINDING widget-type-labels); number overlay centered.
+    // Dual B: type name in each half when space allows (BINDING dual-labels); number overlay centered.
     val dualFill: @Composable (GlanceModifier) -> Unit = { innerMod ->
         fun halfOn(c: WidgetTypeColors): GlanceColorProvider = ColorProvider(
             day = c.onContainerDay,
@@ -540,12 +548,12 @@ private fun DayCell(
                 contentAlignment = Alignment.Center,
             ) {
                 val n0 = types.getOrNull(0)?.name.orEmpty()
-                if (n0.isNotBlank()) {
+                if (showTypeLabel && n0.isNotBlank()) {
                     Text(
                         text = n0,
                         style = TextStyle(
                             color = halfOn(colors[0]),
-                            fontSize = 8.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                         ),
@@ -562,12 +570,12 @@ private fun DayCell(
                 contentAlignment = Alignment.Center,
             ) {
                 val n1 = types.getOrNull(1)?.name.orEmpty()
-                if (n1.isNotBlank()) {
+                if (showTypeLabel && n1.isNotBlank()) {
                     Text(
                         text = n1,
                         style = TextStyle(
                             color = halfOn(colors[1]),
-                            fontSize = 8.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                         ),
