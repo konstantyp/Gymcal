@@ -553,7 +553,7 @@ private fun DayCell(
                         text = n0,
                         style = TextStyle(
                             color = halfOn(colors[0]),
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                         ),
@@ -575,7 +575,7 @@ private fun DayCell(
                         text = n1,
                         style = TextStyle(
                             color = halfOn(colors[1]),
-                            fontSize = 9.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                         ),
@@ -755,7 +755,7 @@ private fun DayCellLabel(
                 text = typeName,
                 style = TextStyle(
                     color = onProvider,
-                    fontSize = 9.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center,
                 ),
