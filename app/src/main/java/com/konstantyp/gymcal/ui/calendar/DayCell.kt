@@ -32,6 +32,15 @@ import com.konstantyp.gymcal.ui.theme.contrastingOnColor
 
 private val CellShape = RoundedCornerShape(8.dp)
 
+/** Empty in-month day fill — design swatch 051650 (ARGB 0xFF051650). */
+private val EmptyDayFill = Color(0xFF051650)
+
+/** Light day number on navy empty cells. */
+private val EmptyDayNumber = Color(0xFFE8EEF8)
+
+/** Soft navy edge when outlineVariant contrast is weak on dark navy. */
+private val EmptyDayStroke = Color(0xFF3A4A7A)
+
 @Composable
 fun DayCell(
     dayOfMonth: Int,
@@ -51,7 +60,8 @@ fun DayCell(
 
     val baseFill: Color = when {
         hasWorkout -> runtime!!.container
-        else -> scheme.surfaceVariant.copy(alpha = if (isOutsideMonth) 0.2f else 0.4f)
+        isOutsideMonth -> EmptyDayFill.copy(alpha = 0.42f)
+        else -> EmptyDayFill
     }
 
     val fill: Color = if (isSelected && !isOutsideMonth) {
@@ -63,17 +73,17 @@ fun DayCell(
     val stroke: BorderStroke? = when {
         isToday && !isOutsideMonth -> BorderStroke(2.dp, scheme.primary)
         isSelected && !isOutsideMonth -> BorderStroke(2.dp, scheme.primary)
-        !hasWorkout && !isOutsideMonth -> BorderStroke(1.dp, scheme.outlineVariant)
+        !hasWorkout && !isOutsideMonth -> BorderStroke(1.dp, EmptyDayStroke)
         else -> null
     }
 
     // Spec: label uses the same contrast color as the day number.
     val numberColor: Color = when {
-        isOutsideMonth -> scheme.onSurfaceVariant.copy(alpha = 0.38f)
+        isOutsideMonth -> EmptyDayNumber.copy(alpha = 0.45f)
         isSelected && !isOutsideMonth -> contrastingOnColor(fill)
         hasWorkout -> runtime!!.onContainer
         isToday -> scheme.primary
-        else -> scheme.onSurfaceVariant
+        else -> EmptyDayNumber
     }
 
     val showTypeLabel = hasWorkout && !typeName.isNullOrBlank()

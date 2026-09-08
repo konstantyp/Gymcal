@@ -2,12 +2,13 @@ package com.konstantyp.gymcal.widget
 
 import androidx.compose.ui.graphics.Color
 import com.konstantyp.gymcal.data.WorkoutType
+import com.konstantyp.gymcal.ui.theme.EmptyDayFill
+import com.konstantyp.gymcal.ui.theme.EmptyDayOn
 import com.konstantyp.gymcal.ui.theme.runtimeColorsForSeed
 
 /**
  * Widget type colors match the app calendar (seed → tonal containers).
- * Supersedes blue palette Variant D for widgets.
- * Empty/chrome use GlanceTheme Material roles in GymcalWidget.
+ * Empty days use [EmptyDayFill] / [EmptyDayOn] (not surfaceVariant grey).
  */
 data class WidgetTypeColors(
     val containerDay: Color,
@@ -30,12 +31,11 @@ fun widgetColorsForSeed(seedArgb: Long): WidgetTypeColors {
 fun widgetColorsForType(type: WorkoutType): WidgetTypeColors =
     widgetColorsForSeed(type.seedArgb)
 
-/** Fallback empty fill if GlanceTheme surfaceVariant unavailable. */
-fun emptyCellFillFallback(dark: Boolean): Color =
-    if (dark) Color(0xFF49454F) else Color(0xFFE7E0EC)
+fun emptyCellFill(outsideMonth: Boolean): Color =
+    EmptyDayFill.copy(alpha = if (outsideMonth) 0.45f else 1f)
 
-fun emptyCellOnFallback(dark: Boolean): Color =
-    if (dark) Color(0xFFCAC4D0) else Color(0xFF49454F)
+fun emptyCellOn(outsideMonth: Boolean): Color =
+    if (outsideMonth) EmptyDayOn.copy(alpha = 0.38f) else EmptyDayOn
 
 fun outlineVariantFallback(dark: Boolean): Color =
     if (dark) Color(0xFF49454F) else Color(0xFFCAC4D0)

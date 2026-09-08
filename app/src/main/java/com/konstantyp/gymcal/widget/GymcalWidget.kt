@@ -458,15 +458,16 @@ private fun DayCell(
             day = colors.containerDay,
             night = colors.containerNight,
         )
-        else -> GlanceTheme.colors.surfaceVariant
+        else -> ColorProvider(
+            day = emptyCellFill(false),
+            night = emptyCellFill(false),
+        )
     }
 
-    // App DayCell: empty = surfaceVariant @ 0.4; outside @ 0.2 (+ outlineVariant 1dp).
-    // GlanceTheme ColorProviders don't expose alpha — use M3 baseline surfaceVariant hexes.
-    val emptyAlpha = if (isOutsideMonth) 0.20f else 0.40f
+    // Empty = #051650 + light on-text (app DayCell parity); outlineVariant 1dp.
     val emptyFillProvider: GlanceColorProvider = ColorProvider(
-        day = emptyCellFillFallback(false).copy(alpha = emptyAlpha),
-        night = emptyCellFillFallback(true).copy(alpha = emptyAlpha),
+        day = emptyCellFill(isOutsideMonth),
+        night = emptyCellFill(isOutsideMonth),
     )
     val emptyStrokeProvider: GlanceColorProvider = ColorProvider(
         day = outlineVariantFallback(false),
@@ -475,15 +476,18 @@ private fun DayCell(
 
     val onProvider: GlanceColorProvider = when {
         isOutsideMonth -> ColorProvider(
-            day = emptyCellOnFallback(false).copy(alpha = 0.38f),
-            night = emptyCellOnFallback(true).copy(alpha = 0.38f),
+            day = emptyCellOn(true),
+            night = emptyCellOn(true),
         )
         hasWorkout -> ColorProvider(
             day = colors!!.onContainerDay,
             night = colors.onContainerNight,
         )
         isToday -> GlanceTheme.colors.primary
-        else -> GlanceTheme.colors.onSurfaceVariant
+        else -> ColorProvider(
+            day = emptyCellOn(false),
+            night = emptyCellOn(false),
+        )
     }
 
     val typeName = type?.name.orEmpty()
@@ -528,7 +532,7 @@ private fun DayCell(
                 }
             }
         }
-        // Today empty: surfaceVariant + primary 2dp ring, number primary.
+        // Today empty: EmptyDayFill + primary 2dp ring, number primary.
         isToday && !hasWorkout -> {
             val innerCorner = (corner.value - TodayRing.value).coerceAtLeast(2f).dp
             Box(
@@ -564,7 +568,7 @@ private fun DayCell(
                 label()
             }
         }
-        // Empty: surfaceVariant + outlineVariant 1dp (app DayCell parity).
+        // Empty: #051650 + outlineVariant 1dp (app DayCell parity).
         else -> {
             if (isOutsideMonth) {
                 Box(
