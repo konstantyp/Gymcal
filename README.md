@@ -1,43 +1,47 @@
-# Gymcal — kalendarz treningowy (MVP v1.1)
+# Gymcal — workout calendar (MVP v1.1)
 
-Aplikacja Android: lokalny kalendarz treningów z **edytowalnymi typami** (nazwa + kolor seed).
-Bez konta, bez backendu. Material 3 + dynamic color (API 31+).
+Android app: a fully local workout calendar with **editable workout types** (name + seed color).
+No account, no backend. Material 3 + dynamic color (API 31+).
 
-**Pakiet:** `com.konstantyp.gymcal`  
-**Spec:** `../SPEC-MaterialYou-MVP-v1.0.md` + `../SPEC-MATERIAL-YOU-MVP-v1.1.md`
+**Package:** `com.konstantyp.gymcal`  
+**Design specs:** `../SPEC-MaterialYou-MVP-v1.0.md` + `../SPEC-MATERIAL-YOU-MVP-v1.1.md` (+ deltas)
 
-## Wymagania
+## Requirements
 
-- Android Studio Hedgehog / Iguana / Ladybug (lub nowsze) z JDK 17+
+- Android Studio Hedgehog / Iguana / Ladybug (or newer) with JDK 17+
 - Android SDK 34, minSdk 26
 
-## Otwarcie i uruchomienie w Android Studio
+## Open and run in Android Studio
 
-1. Sklonuj / rozpakuj projekt.
-2. **File → Open** → wybierz folder `Gymcal` (ten z `settings.gradle.kts`).
-3. Poczekaj na sync Gradle.
-4. Podłącz telefon z włączonym debugowaniem USB **lub** emulator API 26+.
-5. Kliknij **Run** (▶) na konfiguracji `app`.
+1. Clone or unpack the project.
+2. **File → Open** → select the `Gymcal` folder (the one with `settings.gradle.kts`).
+3. Wait for Gradle sync.
+4. Connect a phone with USB debugging enabled **or** use an emulator API 26+.
+5. Click **Run** (▶) on the `app` configuration.
 
-### Budowa APK z CLI
+### Build APK from CLI
 
 ```bash
 cd Gymcal
 ./gradlew assembleDebug
 ```
 
-APK: `app/build/outputs/apk/debug/app-debug.apk`
+APK output: `app/build/outputs/apk/debug/app-debug.apk`
 
-## Funkcje MVP v1.1
+A ready debug build is also in the repo: [`releases/Gymcal-debug.apk`](releases/Gymcal-debug.apk).
 
-- Kalendarz miesiąca z nawigacją ◀ ▶
-- Edytowalna lista typów (max 20): dodaj / edytuj nazwę / kolor / usuń
-- TypeColorPicker: 12 presetów + hue + nasycenie; runtime = harmonized container
-- DayCell: kolor + etykieta `labelSmall` nazwy typu (ellipsis)
-- DayDetail: dynamiczne chipy + „Zarządzaj typami”
-- Persistencja: DataStore (typy JSON + day→typeId); migracja z enum v1.0
+## Features (MVP v1.1)
 
-## Struktura
+- Month calendar with ◀ ▶ navigation
+- Editable workout types (max 20): add / rename / recolor / delete
+- Type color picker: circular HSV wheel + brightness
+- Day cells: type color + small type-name label
+- Day detail: dynamic chips + manage workout types
+- Home-screen widgets: week and month
+- Settings: language (English default, Polish, German) + JSON export/import of the plan
+- Persistence: DataStore (types JSON + day→typeId); migration from v1.0 enums
+
+## Layout
 
 ```
 app/src/main/java/com/konstantyp/gymcal/
@@ -48,4 +52,6 @@ app/src/main/java/com/konstantyp/gymcal/
   ui/calendar/   DayCell, MonthGrid, Legend, CalendarScreen
   ui/detail/     DayDetailScreen
   ui/types/      TypesScreen, TypeColorPicker
+  ui/settings/   Settings (language, export/import)
+  widget/        Glance week + month widgets
 ```
