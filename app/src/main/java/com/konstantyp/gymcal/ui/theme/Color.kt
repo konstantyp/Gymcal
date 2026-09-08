@@ -31,8 +31,8 @@ val TypeColorPresetNames: List<String> = listOf(
     "Indigo", "Fiolet", "Magenta", "Róż", "Kamień", "Grafit",
 )
 
-/** Empty day cell fill (app + widgets) — supersedes surfaceVariant grey. */
-val EmptyDayFill = Color(0xFF051650)
+/** Empty day cell fill (app + widgets) — near-black empty fill (BINDING weekends-empty-0F131C). */
+val EmptyDayFill = Color(0xFF0F131C)
 
 /** Light on-empty text for contrast on [EmptyDayFill]. */
-val EmptyDayOn = Color(0xFFE8EEF9)
+val EmptyDayOn = Color(0xFFE8EEF8)

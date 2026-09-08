@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- updatePeriodMillis=1800000: Android ~30 min floor for periodic updates.
      Immediate refresh: DataStore writes (awaited) + MainActivity.onResume. No TIME_TICK.
-     minWidth/targetCell sized so all 7 weekday labels + day cells stay visible (BINDING week7). -->
+     minWidth ~70*n-30 for n launcher cells; 7 columns need ~460dp / 5–6 cells. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="340dp"
+    android:minWidth="430dp"
     android:minHeight="110dp"
-    android:minResizeWidth="300dp"
+    android:minResizeWidth="340dp"
     android:minResizeHeight="110dp"
-    android:targetCellWidth="5"
+    android:targetCellWidth="6"
     android:targetCellHeight="2"
     android:maxResizeHeight="200dp"
     android:resizeMode="horizontal|vertical"

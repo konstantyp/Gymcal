@@ -131,15 +131,15 @@ private val DestKey = ActionParameters.Key<String>(MainActivity.EXTRA_DEST)
 private val DateKey = ActionParameters.Key<String>(MainActivity.EXTRA_DATE)
 
 private val TypeLabelMinCellHeight = 45.dp
-/** GCal-like geometry + app-matched Material colors: root 28dp, pad 16, header 48. */
+/** GCal-like geometry; tighter pad/gaps so 7 week+month columns fit launcher width. */
 private val WidgetCorner = 28.dp
-private val WidgetPadding = 16.dp
-private val HeaderRowHeight = 48.dp
-private val HeaderGap = 8.dp
-private val DayGap = 4.dp
-private val DayCorner = 16.dp
-private val MonthDayGap = 5.dp
-private val MonthDayCorner = 14.dp
+private val WidgetPadding = 12.dp
+private val HeaderRowHeight = 44.dp
+private val HeaderGap = 6.dp
+private val DayGap = 3.dp
+private val DayCorner = 12.dp
+private val MonthDayGap = 3.dp
+private val MonthDayCorner = 12.dp
 /** Today primary ring (app DayCell BorderStroke 2dp primary). */
 private val TodayRing = 2.dp
 /** Empty day outlineVariant stroke (app DayCell parity). */
@@ -635,7 +635,7 @@ private fun DayCell(
                 label()
             }
         }
-        // Empty: #051650 + outlineVariant 1dp (app DayCell parity).
+        // Empty: #0F131C + outlineVariant 1dp (app DayCell parity).
         else -> {
             if (isOutsideMonth) {
                 Box(
