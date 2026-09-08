@@ -461,15 +461,13 @@ private fun DayCell(
         else -> GlanceTheme.colors.surfaceVariant
     }
 
-    // App DayCell: empty = surfaceVariant (+ outlineVariant 1dp); outside dimmed.
-    val emptyFillProvider: GlanceColorProvider = if (isOutsideMonth) {
-        ColorProvider(
-            day = emptyCellFillFallback(false).copy(alpha = 0.20f),
-            night = emptyCellFillFallback(true).copy(alpha = 0.20f),
-        )
-    } else {
-        GlanceTheme.colors.surfaceVariant
-    }
+    // App DayCell: empty = surfaceVariant @ 0.4; outside @ 0.2 (+ outlineVariant 1dp).
+    // GlanceTheme ColorProviders don't expose alpha — use M3 baseline surfaceVariant hexes.
+    val emptyAlpha = if (isOutsideMonth) 0.20f else 0.40f
+    val emptyFillProvider: GlanceColorProvider = ColorProvider(
+        day = emptyCellFillFallback(false).copy(alpha = emptyAlpha),
+        night = emptyCellFillFallback(true).copy(alpha = emptyAlpha),
+    )
     val emptyStrokeProvider: GlanceColorProvider = ColorProvider(
         day = outlineVariantFallback(false),
         night = outlineVariantFallback(true),
