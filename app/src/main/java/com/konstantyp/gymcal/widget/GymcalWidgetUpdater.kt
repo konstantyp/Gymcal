@@ -5,6 +5,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.glance.GlanceId
+import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -23,42 +25,46 @@ import kotlinx.coroutines.withContext
  * refresh is [requestUpdate] (awaited from repository) plus [requestUpdateAsync]
  * from Activity / receivers.
  *
- * Glance updates run on [Dispatchers.Default] — not Main.immediate — so type-color
- * saves on Main cannot stall/skip rebind. Each GlanceId also gets a Preferences
- * nonce so color-only changes force a redraw.
+ * Glance 1.1: when a session is already running, [GlanceAppWidget.update] only
+ * applies UpdateGlanceState and does **not** re-enter [GlanceAppWidget.provideGlance].
+ * Type/color data captured outside `provideContent` would stay stale. We write
+ * [ForceRefreshAtKey] so [GymcalBaseWidget] reloads DataStore inside content, then
+ * updateAll + per-id update + [AppWidgetManager.ACTION_APPWIDGET_UPDATE].
  */
 object GymcalWidgetUpdater {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private val ForceRefreshAtKey = longPreferencesKey("force_refresh_at")
+    /** Glance Preferences nonce — [GymcalBaseWidget] reloads types when this changes. */
+    internal val ForceRefreshAtKey = longPreferencesKey("force_refresh_at")
 
     /**
      * Updates all week + month Glance widgets. Uses [NonCancellable] so a
      * cancelled DayDetail / Types coroutine cannot skip the home-screen refresh.
-     * Also broadcasts [AppWidgetManager.ACTION_APPWIDGET_UPDATE] so launchers
-     * that ignore Glance-only updates still rebind.
      */
     suspend fun requestUpdate(context: Context) {
         val appContext = context.applicationContext
         withContext(NonCancellable + Dispatchers.Default) {
-            val manager = GlanceAppWidgetManager(appContext)
-            val widgets: List<GlanceAppWidget> = listOf(
-                GymcalWeekWidget(),
-                GymcalMonthWidget(),
+            val glanceManager = GlanceAppWidgetManager(appContext)
+            val appWidgetManager = AppWidgetManager.getInstance(appContext)
+            val targets = listOf(
+                WidgetTarget(GymcalWeekWidget(), GymcalWeekWidgetReceiver::class.java),
+                WidgetTarget(GymcalMonthWidget(), GymcalMonthWidgetReceiver::class.java),
             )
-            for (widget in widgets) {
-                val ids = runCatching { manager.getGlanceIds(widget.javaClass) }
-                    .getOrDefault(emptyList())
-                val now = System.currentTimeMillis()
+            val now = System.currentTimeMillis()
+            for (target in targets) {
+                val ids = resolveGlanceIds(appContext, glanceManager, appWidgetManager, target)
                 for (id in ids) {
                     runCatching {
                         updateAppWidgetState(appContext, id) { prefs ->
                             prefs[ForceRefreshAtKey] = now
                         }
-                        widget.update(appContext, id)
                     }
                 }
-                runCatching { widget.updateAll(appContext) }
+                // updateAll covers Glance-tracked IDs; per-id covers AppWidgetManager fallback.
+                runCatching { target.widget.updateAll(appContext) }
+                for (id in ids) {
+                    runCatching { target.widget.update(appContext, id) }
+                }
             }
             runCatching { notifyProviders(appContext) }
         }
@@ -70,6 +76,25 @@ object GymcalWidgetUpdater {
         scope.launch {
             requestUpdate(appContext)
         }
+    }
+
+    private data class WidgetTarget(
+        val widget: GlanceAppWidget,
+        val receiver: Class<*>,
+    )
+
+    private suspend fun resolveGlanceIds(
+        appContext: Context,
+        glanceManager: GlanceAppWidgetManager,
+        appWidgetManager: AppWidgetManager,
+        target: WidgetTarget,
+    ): List<GlanceId> {
+        val fromGlance = runCatching { glanceManager.getGlanceIds(target.widget.javaClass) }
+            .getOrDefault(emptyList())
+        if (fromGlance.isNotEmpty()) return fromGlance
+        // Glance DataStore can lag AppWidgetManager (fresh pin / OEM). Fall back.
+        val cn = ComponentName(appContext, target.receiver)
+        return appWidgetManager.getAppWidgetIds(cn).map { AppWidgetId(it) }
     }
 
     private fun notifyProviders(appContext: Context) {
@@ -87,6 +112,11 @@ object GymcalWidgetUpdater {
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
                 },
             )
+            ids.forEach { id ->
+                runCatching {
+                    manager.notifyAppWidgetViewDataChanged(id, android.R.id.content)
+                }
+            }
         }
     }
 }

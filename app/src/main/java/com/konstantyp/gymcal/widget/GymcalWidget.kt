@@ -8,8 +8,15 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.currentState
 import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
@@ -68,18 +75,49 @@ abstract class GymcalBaseWidget(
 
     override val sizeMode: SizeMode = SizeMode.Exact
 
+    /**
+     * Loads types/workouts from DataStore, then keeps them fresh when
+     * [GymcalWidgetUpdater.ForceRefreshAtKey] changes.
+     *
+     * Glance 1.1 reuses a running session on [update]/[updateAll]: it applies
+     * UpdateGlanceState and recomposes `provideContent` without re-entering this
+     * method. Capturing [colorCache] only here would leave seed-color edits stale.
+     * Keying a [LaunchedEffect] on the force-refresh nonce rebuilds colors from
+     * a fresh DataStore read on every mutation-driven update.
+     */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val repository = (context.applicationContext as GymcalApp).workoutRepository
         val loaded = runCatching {
             Pair(repository.types.first(), repository.workouts.first())
         }
-        val types = loaded.getOrNull()?.first.orEmpty()
-        val workouts = loaded.getOrNull()?.second.orEmpty()
-        val loadError = loaded.isFailure
-        val typesById = types.associateBy { it.id }
-        val colorCache = types.associate { it.id to widgetColorsForType(it) }
+        val initialTypes = loaded.getOrNull()?.first.orEmpty()
+        val initialWorkouts = loaded.getOrNull()?.second.orEmpty()
+        val initialError = loaded.isFailure
 
         provideContent {
+            val prefs = currentState<Preferences>()
+            val refreshAt = prefs[GymcalWidgetUpdater.ForceRefreshAtKey] ?: 0L
+
+            var types by remember { mutableStateOf(initialTypes) }
+            var workouts by remember { mutableStateOf(initialWorkouts) }
+            var loadError by remember { mutableStateOf(initialError) }
+
+            LaunchedEffect(refreshAt) {
+                runCatching {
+                    Pair(repository.types.first(), repository.workouts.first())
+                }.onSuccess { (t, w) ->
+                    types = t
+                    workouts = w
+                    loadError = false
+                }.onFailure {
+                    loadError = true
+                }
+            }
+
+            val typesById = types.associateBy { it.id }
+            // Rebuild every composition so seedArgb edits always paint.
+            val colorCache = types.associate { it.id to widgetColorsForType(it) }
+
             GlanceTheme(colors = DynamicThemeColorProviders) {
                 WidgetRoot(
                     layoutMode = layoutMode,
