@@ -8,11 +8,10 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -62,7 +61,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 enum class WidgetLayoutMode {
@@ -77,14 +75,16 @@ abstract class GymcalBaseWidget(
     override val sizeMode: SizeMode = SizeMode.Exact
 
     /**
-     * Loads types/workouts from DataStore, then keeps them fresh when
-     * [GymcalWidgetUpdater.ForceRefreshAtKey] changes.
+     * Loads types/workouts from DataStore, then observes [WorkoutRepository] Flows
+     * inside `provideContent` so seed-color edits rebuild colorCache immediately.
      *
      * Glance 1.1 reuses a running session on [update]/[updateAll]: it applies
      * UpdateGlanceState and recomposes `provideContent` without re-entering this
-     * method. Capturing [colorCache] only here would leave seed-color edits stale.
-     * Keying a [LaunchedEffect] on the force-refresh nonce rebuilds colors from
-     * a fresh DataStore read on every mutation-driven update.
+     * method. Capturing colors only here would leave edits stale.
+     *
+     * Primary path: [produceState] collecting repository Flows. [ForceRefreshAtKey]
+     * remains a kick that restarts collection when Glance Preferences change
+     * (OEM / session edge cases) — not a LaunchedEffect one-shot reload.
      */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val repository = (context.applicationContext as GymcalApp).workoutRepository
@@ -97,39 +97,36 @@ abstract class GymcalBaseWidget(
 
         provideContent {
             val prefs = currentState<Preferences>()
+            // Kick: Preference nonce change recomposes and restarts Flow collection.
             val refreshAt = prefs[GymcalWidgetUpdater.ForceRefreshAtKey] ?: 0L
 
-            // Key on refreshAt so API 36 recompositions do not keep a stale remember slot.
-            var types by remember(refreshAt) { mutableStateOf(initialTypes) }
-            var workouts by remember(refreshAt) { mutableStateOf(initialWorkouts) }
-            var loadError by remember(refreshAt) { mutableStateOf(initialError) }
-
-            LaunchedEffect(refreshAt) {
-                // Let DataStore + Glance state settle (esp. Android 16 dual-pass updater).
-                if (refreshAt != 0L) {
-                    delay(40)
-                }
+            val typesLoad by produceState(
+                initialValue = Pair(initialTypes, initialError),
+                key1 = refreshAt,
+            ) {
                 runCatching {
-                    Pair(repository.types.first(), repository.workouts.first())
-                }.onSuccess { (t, w) ->
-                    types = t
-                    workouts = w
-                    loadError = false
-                }.onFailure {
-                    loadError = true
-                }
-                // Second read: beat rare stale-first emission after color edit.
-                if (refreshAt != 0L) {
-                    delay(60)
-                    runCatching {
-                        Pair(repository.types.first(), repository.workouts.first())
-                    }.onSuccess { (t, w) ->
-                        types = t
-                        workouts = w
-                        loadError = false
+                    repository.types.collect { types ->
+                        value = Pair(types, false)
                     }
+                }.onFailure {
+                    value = Pair(value.first, true)
                 }
             }
+            val workoutsLoad by produceState(
+                initialValue = Pair(initialWorkouts, initialError),
+                key1 = refreshAt,
+            ) {
+                runCatching {
+                    repository.workouts.collect { map ->
+                        value = Pair(map, false)
+                    }
+                }.onFailure {
+                    value = Pair(value.first, true)
+                }
+            }
+            val types = typesLoad.first
+            val workouts = workoutsLoad.first
+            val loadError = typesLoad.second || workoutsLoad.second
 
             val typesById = types.associateBy { it.id }
             // Rebuild every composition so seedArgb edits always paint.
@@ -146,6 +143,7 @@ abstract class GymcalBaseWidget(
             }
         }
     }
+
 }
 
 class GymcalWeekWidget : GymcalBaseWidget(WidgetLayoutMode.Week)
