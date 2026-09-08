@@ -1,9 +1,10 @@
-# Gymcal — workout calendar (MVP v1.1)
+# Liftloq — workout calendar (MVP v1.1)
 
 Android app: a fully local workout calendar with **editable workout types** (name + seed color).
 No account, no backend. Material 3 + dynamic color (API 31+).
 
-**Package:** `com.konstantyp.gymcal`  
+**Display name:** Liftloq (brand)
+**Package:** `com.konstantyp.gymcal` (unchanged)  
 **Design specs:** `../SPEC-MaterialYou-MVP-v1.0.md` + `../SPEC-MATERIAL-YOU-MVP-v1.1.md` (+ deltas)
 
 ## Requirements

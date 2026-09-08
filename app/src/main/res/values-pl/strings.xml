@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gymcal</string>
+    <string name="app_name">Liftloq</string>
     <string name="settings_title">Ustawienia</string>
     <string name="settings_language">Język</string>
     <string name="lang_en">English</string>
@@ -68,11 +68,11 @@
         <item>Teal</item><item>Błękit</item><item>Indigo</item><item>Fiolet</item>
         <item>Magenta</item><item>Róż</item><item>Kamień</item><item>Grafit</item>
     </string-array>
-    <string name="widget_week_label">Gymcal — tydzień</string>
+    <string name="widget_week_label">Liftloq — tydzień</string>
     <string name="widget_week_description">Kolorowy tydzień treningów</string>
-    <string name="widget_month_label">Gymcal — miesiąc</string>
+    <string name="widget_month_label">Liftloq — miesiąc</string>
     <string name="widget_month_description">Kolorowy miesiąc treningów</string>
-    <string name="widget_open_gymcal">Otwórz Gymcal</string>
+    <string name="widget_open_gymcal">Otwórz Liftloq</string>
     <string name="add_workout">Dodaj trening</string>
     <string name="widget_a11y_none">brak</string>
     <string name="widget_a11y_today">dziś</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gymcal</string>
+    <string name="app_name">Liftloq</string>
 
     <!-- Settings / i18n (DesignBot delta) -->
     <string name="settings_title">Settings</string>
@@ -82,11 +82,11 @@
     </string-array>
 
     <!-- Widgets -->
-    <string name="widget_week_label">Gymcal — week</string>
+    <string name="widget_week_label">Liftloq — week</string>
     <string name="widget_week_description">Colorful training week</string>
-    <string name="widget_month_label">Gymcal — month</string>
+    <string name="widget_month_label">Liftloq — month</string>
     <string name="widget_month_description">Colorful training month</string>
-    <string name="widget_open_gymcal">Open Gymcal</string>
+    <string name="widget_open_gymcal">Open Liftloq</string>
     <string name="add_workout">Add workout</string>
     <string name="widget_a11y_none">none</string>
     <string name="widget_a11y_today">today</string>

@@ -325,7 +325,7 @@ private fun WeekHeader(weekStart: LocalDate, weekEnd: LocalDate, locale: Locale)
             modifier = GlanceModifier.defaultWeight(),
         )
         Text(
-            text = "Gymcal",
+            text = LocalContext.current.getString(R.string.app_name),
             style = TextStyle(
                 color = GlanceTheme.colors.onSurfaceVariant,
                 fontSize = 11.sp,
@@ -359,7 +359,7 @@ private fun MonthHeader(yearMonth: YearMonth, locale: Locale) {
             modifier = GlanceModifier.defaultWeight(),
         )
         Text(
-            text = "Gymcal",
+            text = LocalContext.current.getString(R.string.app_name),
             style = TextStyle(
                 color = GlanceTheme.colors.onSurfaceVariant,
                 fontSize = 11.sp,

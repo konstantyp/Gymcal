@@ -212,7 +212,7 @@ fun SettingsScreen(
 
             FilledTonalButton(
                 onClick = {
-                    val suggested = "gymcal-plan-" +
+                    val suggested = "liftloq-plan-" +
                         LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) +
                         ".json"
                     scope.launch {
