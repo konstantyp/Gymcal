@@ -62,6 +62,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 enum class WidgetLayoutMode {
@@ -98,11 +99,16 @@ abstract class GymcalBaseWidget(
             val prefs = currentState<Preferences>()
             val refreshAt = prefs[GymcalWidgetUpdater.ForceRefreshAtKey] ?: 0L
 
-            var types by remember { mutableStateOf(initialTypes) }
-            var workouts by remember { mutableStateOf(initialWorkouts) }
-            var loadError by remember { mutableStateOf(initialError) }
+            // Key on refreshAt so API 36 recompositions do not keep a stale remember slot.
+            var types by remember(refreshAt) { mutableStateOf(initialTypes) }
+            var workouts by remember(refreshAt) { mutableStateOf(initialWorkouts) }
+            var loadError by remember(refreshAt) { mutableStateOf(initialError) }
 
             LaunchedEffect(refreshAt) {
+                // Let DataStore + Glance state settle (esp. Android 16 dual-pass updater).
+                if (refreshAt != 0L) {
+                    delay(40)
+                }
                 runCatching {
                     Pair(repository.types.first(), repository.workouts.first())
                 }.onSuccess { (t, w) ->
@@ -111,6 +117,17 @@ abstract class GymcalBaseWidget(
                     loadError = false
                 }.onFailure {
                     loadError = true
+                }
+                // Second read: beat rare stale-first emission after color edit.
+                if (refreshAt != 0L) {
+                    delay(60)
+                    runCatching {
+                        Pair(repository.types.first(), repository.workouts.first())
+                    }.onSuccess { (t, w) ->
+                        types = t
+                        workouts = w
+                        loadError = false
+                    }
                 }
             }
 
