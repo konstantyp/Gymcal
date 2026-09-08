@@ -140,7 +140,7 @@ private val DayGap = 6.dp
 private val DayCorner = 16.dp
 private val MonthDayGap = 5.dp
 private val MonthDayCorner = 14.dp
-/** Today assigned ice ring inside cell. */
+/** Today primary ring (app DayCell BorderStroke 2dp primary). */
 private val TodayRing = 2.dp
 /** Empty day outlineVariant stroke (app DayCell parity). */
 private val EmptyStroke = 1.dp
