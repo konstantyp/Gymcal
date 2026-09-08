@@ -28,20 +28,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
+import com.konstantyp.gymcal.ui.theme.EmptyDayFill
+import com.konstantyp.gymcal.ui.theme.EmptyDayOn
 import com.konstantyp.gymcal.ui.theme.LocalTypeColorMap
 import com.konstantyp.gymcal.ui.theme.TypeRuntimeColors
 import com.konstantyp.gymcal.ui.theme.contrastingOnColor
 
 private val CellShape = RoundedCornerShape(8.dp)
 
-/** Empty in-month day fill — design swatch 051650 (ARGB 0xFF051650). */
-private val EmptyDayFill = Color(0xFF051650)
-
-/** Light day number on navy empty cells. */
-private val EmptyDayNumber = Color(0xFFE8EEF8)
-
-/** Soft navy edge when outlineVariant contrast is weak on dark navy. */
-private val EmptyDayStroke = Color(0xFF3A4A7A)
+/** Soft edge for empty cells on near-black #0F131C. */
+private val EmptyDayStroke = Color(0xFF2A303C)
 
 @Composable
 fun DayCell(
@@ -82,12 +78,12 @@ fun DayCell(
 
     // Dual: centered light/contrasting number over both halves (BINDING B).
     val numberColor: Color = when {
-        isOutsideMonth -> EmptyDayNumber.copy(alpha = 0.45f)
+        isOutsideMonth -> EmptyDayOn.copy(alpha = 0.45f)
         slotCount >= 2 -> Color.White
         isSelected && !isOutsideMonth -> contrastingOnColor(fillSingle)
         slotCount == 1 -> runtimes[0].onContainer
         isToday -> scheme.primary
-        else -> EmptyDayNumber
+        else -> EmptyDayOn
     }
 
     val showTypeLabel = slotCount == 1 && typeNames.firstOrNull()?.isNotBlank() == true
