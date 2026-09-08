@@ -1,6 +1,7 @@
 package com.konstantyp.gymcal.widget
 
 import android.appwidget.AppWidgetManager
+import android.os.Build
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -23,14 +24,14 @@ import kotlinx.coroutines.withContext
  * Immediate Glance widget refresh after DataStore / locale writes.
  *
  * Glance 1.1 + API 36: a live session often skips re-entering [GlanceAppWidget.provideGlance]
- * on [update]/[updateAll] (UpdateGlanceState only). We bump [ForceRefreshAtKey] so content
- * reloads DataStore, broadcast [AppWidgetManager.ACTION_APPWIDGET_UPDATE] (not Glance-only),
- * and run a second delayed pass — OEM launchers on Android 16 sometimes drop the first rebind.
+ * on [update]/[updateAll] (UpdateGlanceState only). We bump [ForceRefreshAtKey] as a kick while content
+ * observes repository Flows, broadcast [AppWidgetManager.ACTION_APPWIDGET_UPDATE] (not Glance-only),
+ * and on API 31+ run a second delayed pass — OEM launchers on Android 16 sometimes drop the first rebind.
  */
 object GymcalWidgetUpdater {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    /** Glance Preferences nonce — [GymcalBaseWidget] reloads types when this changes. */
+    /** Glance Preferences nonce — kick so [GymcalBaseWidget] restarts Flow collection. */
     internal val ForceRefreshAtKey = longPreferencesKey("force_refresh_at")
 
     private const val SecondPassDelayMs = 280L
@@ -43,9 +44,11 @@ object GymcalWidgetUpdater {
         val appContext = context.applicationContext
         withContext(NonCancellable + Dispatchers.Default) {
             refreshPass(appContext, System.currentTimeMillis())
-            // API 36 / Pixel launchers: second pass after DataStore + Glance session settle.
-            delay(SecondPassDelayMs)
-            refreshPass(appContext, System.currentTimeMillis())
+            // API 31+: second pass for sticky OEM launchers (Android 16 often drops first rebind).
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                delay(SecondPassDelayMs)
+                refreshPass(appContext, System.currentTimeMillis())
+            }
         }
     }
 

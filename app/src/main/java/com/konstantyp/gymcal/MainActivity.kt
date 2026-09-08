@@ -189,8 +189,13 @@ private fun GymcalRoot(
                             }
                         },
                         onUpdate = { id, name, seedArgb ->
-                            repository.updateType(id, name, seedArgb).also {
-                                GymcalWidgetUpdater.requestUpdateAsync(context)
+                            // Repo already awaits requestUpdate; await again + async kick
+                            // so Android 16 launchers get a second chance after color save.
+                            repository.updateType(id, name, seedArgb).also { result ->
+                                if (result.isSuccess) {
+                                    GymcalWidgetUpdater.requestUpdate(context)
+                                    GymcalWidgetUpdater.requestUpdateAsync(context)
+                                }
                             }
                         },
                         onDelete = { id ->

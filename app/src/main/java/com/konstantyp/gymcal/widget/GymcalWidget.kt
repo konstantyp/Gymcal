@@ -8,10 +8,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -61,6 +59,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 
 enum class WidgetLayoutMode {
@@ -100,33 +99,27 @@ abstract class GymcalBaseWidget(
             // Kick: Preference nonce change recomposes and restarts Flow collection.
             val refreshAt = prefs[GymcalWidgetUpdater.ForceRefreshAtKey] ?: 0L
 
-            val typesLoad by produceState(
-                initialValue = Pair(initialTypes, initialError),
-                key1 = refreshAt,
-            ) {
-                runCatching {
-                    repository.types.collect { types ->
-                        value = Pair(types, false)
-                    }
-                }.onFailure {
-                    value = Pair(value.first, true)
+            // Primary path: live DataStore Flows. refreshAt restarts collection on kick.
+            // Do not wrap collect in runCatching — CancellationException on key change
+            // must propagate so produceState can restart cleanly.
+            val types by produceState(initialValue = initialTypes, key1 = refreshAt) {
+                try {
+                    repository.types.collect { value = it }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Keep last good value; initialError covers first-paint failure.
                 }
             }
-            val workoutsLoad by produceState(
-                initialValue = Pair(initialWorkouts, initialError),
-                key1 = refreshAt,
-            ) {
-                runCatching {
-                    repository.workouts.collect { map ->
-                        value = Pair(map, false)
-                    }
-                }.onFailure {
-                    value = Pair(value.first, true)
+            val workouts by produceState(initialValue = initialWorkouts, key1 = refreshAt) {
+                try {
+                    repository.workouts.collect { value = it }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
                 }
             }
-            val types = typesLoad.first
-            val workouts = workoutsLoad.first
-            val loadError = typesLoad.second || workoutsLoad.second
+            val loadError = initialError && types.isEmpty() && workouts.isEmpty()
 
             val typesById = types.associateBy { it.id }
             // Rebuild every composition so seedArgb edits always paint.
