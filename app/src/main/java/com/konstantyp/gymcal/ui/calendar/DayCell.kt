@@ -122,22 +122,54 @@ fun DayCell(
         contentAlignment = Alignment.Center,
     ) {
         if (slotCount >= 2) {
-            // Horizontal split B: top = slot0, bottom = slot1
+            // Horizontal split B: top = slot0, bottom = slot1 + type names (BINDING app-daycell-dual-labels)
+            val name0 = typeNames.getOrNull(0).orEmpty()
+            val name1 = typeNames.getOrNull(1).orEmpty()
             Column(modifier = Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .background(runtimes[0].container),
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (name0.isNotBlank()) {
+                        Text(
+                            text = name0,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = runtimes[0].onContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
+                        )
+                    }
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .background(runtimes[1].container),
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (name1.isNotBlank()) {
+                        Text(
+                            text = name1,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = runtimes[1].onContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
+                        )
+                    }
+                }
             }
-            // Number only, centered over both halves
+            // Day number centered over both halves
             Text(
                 text = dayOfMonth.toString(),
                 style = MaterialTheme.typography.labelLarge,
