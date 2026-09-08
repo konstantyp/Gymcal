@@ -130,7 +130,7 @@ class GymcalMonthWidgetReceiver : GlanceAppWidgetReceiver() {
 private val DestKey = ActionParameters.Key<String>(MainActivity.EXTRA_DEST)
 private val DateKey = ActionParameters.Key<String>(MainActivity.EXTRA_DATE)
 
-private val TypeLabelMinCellHeight = 56.dp
+private val TypeLabelMinCellHeight = 45.dp
 private val WidgetCorner = 16.dp
 private val WidgetPadding = 12.dp
 private val DayGap = 6.dp
