@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.konstantyp.gymcal"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.konstantyp.gymcal"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 2
         versionName = "1.1.0"
         setProperty("archivesBaseName", "Liftloq")
