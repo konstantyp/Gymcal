@@ -13,6 +13,7 @@ android {
         targetSdk = 34
         versionCode = 2
         versionName = "1.1.0"
+        setProperty("archivesBaseName", "Liftloq")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
