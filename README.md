@@ -10,7 +10,7 @@ No account, no backend. Material 3 + dynamic color (API 31+).
 ## Requirements
 
 - Android Studio Hedgehog / Iguana / Ladybug (or newer) with JDK 17+
-- Android SDK 34, minSdk 26
+- Android SDK 36 (Android 16), minSdk 26
 
 ## Open and run in Android Studio
 
