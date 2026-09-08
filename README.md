@@ -29,7 +29,7 @@ cd Gymcal
 
 APK output: `app/build/outputs/apk/debug/app-debug.apk`
 
-A ready debug build is also in the repo: [`releases/Gymcal-debug.apk`](releases/Gymcal-debug.apk).
+A ready debug build is also in the repo: [`releases/Liftloq-debug.apk`](releases/Liftloq-debug.apk).
 
 ## Features (MVP v1.1)
 
