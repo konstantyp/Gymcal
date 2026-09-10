@@ -72,6 +72,24 @@
         <item>Teal</item><item>Błękit</item><item>Indigo</item><item>Fiolet</item>
         <item>Magenta</item><item>Róż</item><item>Kamień</item><item>Grafit</item>
     </string-array>
+
+    <string name="about_title">O aplikacji</string>
+    <string name="about_row">O Liftloq</string>
+    <string name="about_version">Wersja %1$s</string>
+    <string name="about_blurb_line1">Lokalny kalendarz treningów</string>
+    <string name="about_blurb_line2">Bez konta · Material You</string>
+    <string name="about_copyright">© 2026 Liftloq</string>
+    <string name="about_rights">Wszelkie prawa zastrzeżone</string>
+    <string name="settings_show_quote">Pokaż cytat motywacyjny</string>
+    <string name="settings_show_quote_supporting">ZenQuotes na ekranie kalendarza</string>
+    <string name="stats_title">Statystyki</string>
+    <string name="stats_row">Ten tydzień</string>
+    <string name="stats_this_week">Ten tydzień</string>
+    <string name="stats_total_sessions">Łącznie sesji</string>
+    <string name="stats_by_type">Według typu treningu</string>
+    <string name="stats_empty_week">Brak treningów w tym tygodniu</string>
+    <string name="stats_type_this_week">%1$d w tym tygodniu</string>
+
     <string name="widget_week_label">Liftloq — tydzień</string>
     <string name="widget_week_description">Kolorowy tydzień treningów</string>
     <string name="widget_month_label">Liftloq — miesiąc</string>

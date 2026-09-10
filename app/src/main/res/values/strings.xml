@@ -85,6 +85,29 @@
         <item>Magenta</item><item>Rose</item><item>Stone</item><item>Graphite</item>
     </string-array>
 
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_row">About Liftloq</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_blurb_line1">Local workout calendar</string>
+    <string name="about_blurb_line2">No account · Material You</string>
+    <string name="about_copyright">© 2026 Liftloq</string>
+    <string name="about_rights">All rights reserved</string>
+
+    <!-- Quote visibility -->
+    <string name="settings_show_quote">Show motivation quote</string>
+    <string name="settings_show_quote_supporting">ZenQuotes on the calendar screen</string>
+
+    <!-- Stats -->
+    <string name="stats_title">Stats</string>
+    <string name="stats_row">This week</string>
+    <string name="stats_this_week">This week</string>
+    <string name="stats_total_sessions">Total sessions</string>
+    <string name="stats_by_type">By workout type</string>
+    <string name="stats_empty_week">No workouts this week</string>
+    <string name="stats_type_this_week">%1$d this week</string>
+
     <!-- Widgets -->
     <string name="widget_week_label">Liftloq — week</string>
     <string name="widget_week_description">Colorful training week</string>

@@ -21,9 +21,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.konstantyp.gymcal.ui.about.AboutScreen
 import com.konstantyp.gymcal.ui.calendar.CalendarScreen
 import com.konstantyp.gymcal.ui.detail.DayDetailScreen
 import com.konstantyp.gymcal.ui.settings.SettingsScreen
+import com.konstantyp.gymcal.ui.stats.StatsScreen
 import com.konstantyp.gymcal.ui.theme.GymcalTheme
 import com.konstantyp.gymcal.ui.types.TypesScreen
 import com.konstantyp.gymcal.widget.GymcalWidgetUpdater
@@ -101,9 +103,11 @@ private fun GymcalRoot(
     val app = remember { context.applicationContext as GymcalApp }
     val repository = remember { app.workoutRepository }
     val localePreferences = remember { app.localePreferences }
+    val quotePreferences = remember { app.quotePreferences }
     val types by repository.types.collectAsState(initial = emptyList())
     val workouts by repository.workouts.collectAsState(initial = emptyMap())
     val localeTag by localePreferences.localeTag.collectAsState(initial = "en")
+    val showMotivationQuote by quotePreferences.showMotivationQuote.collectAsState(initial = true)
     val scope = rememberCoroutineScope()
 
     GymcalTheme(types = types) {
@@ -147,6 +151,7 @@ private fun GymcalRoot(
                         onOpenSettings = {
                             navController.navigate("settings")
                         },
+                        showMotivationQuote = showMotivationQuote,
                     )
                 }
                 composable(
@@ -213,6 +218,26 @@ private fun GymcalRoot(
                             }
                         },
                         repository = repository,
+                        onBack = { navController.popBackStack() },
+                        showMotivationQuote = showMotivationQuote,
+                        onShowMotivationQuoteChange = { show ->
+                            scope.launch {
+                                quotePreferences.setShowMotivationQuote(show)
+                            }
+                        },
+                        onOpenAbout = { navController.navigate("about") },
+                        onOpenStats = { navController.navigate("stats") },
+                    )
+                }
+                composable("about") {
+                    AboutScreen(
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable("stats") {
+                    StatsScreen(
+                        workouts = workouts,
+                        types = types,
                         onBack = { navController.popBackStack() },
                     )
                 }
