@@ -2,6 +2,7 @@ package com.konstantyp.gymcal
 
 import android.app.Application
 import com.konstantyp.gymcal.data.LocalePreferences
+import com.konstantyp.gymcal.data.QuotePreferences
 import com.konstantyp.gymcal.data.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +14,8 @@ class GymcalApp : Application() {
         private set
     lateinit var localePreferences: LocalePreferences
         private set
+    lateinit var quotePreferences: QuotePreferences
+        private set
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -21,6 +24,7 @@ class GymcalApp : Application() {
         localePreferences = LocalePreferences(this)
         // Default English on first launch; apply stored tag thereafter.
         localePreferences.bootstrap()
+        quotePreferences = QuotePreferences(this)
         workoutRepository = WorkoutRepository(this)
         appScope.launch {
             workoutRepository.ensureInitialized()

@@ -53,6 +53,7 @@ fun CalendarScreen(
     onDayClick: (LocalDate) -> Unit,
     onManageTypes: () -> Unit,
     onOpenSettings: () -> Unit,
+    showMotivationQuote: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     var yearMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -181,8 +182,10 @@ fun CalendarScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            MotivationQuoteBar()
+            if (showMotivationQuote) {
+                Spacer(modifier = Modifier.height(16.dp))
+                MotivationQuoteBar()
+            }
         }
     }
 }
