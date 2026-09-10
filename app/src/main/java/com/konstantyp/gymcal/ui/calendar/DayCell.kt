@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,15 +30,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
 import com.konstantyp.gymcal.ui.theme.EmptyDayFill
+import com.konstantyp.gymcal.ui.theme.EmptyDayFillLight
 import com.konstantyp.gymcal.ui.theme.EmptyDayOn
+import com.konstantyp.gymcal.ui.theme.EmptyDayOnLight
+import com.konstantyp.gymcal.ui.theme.EmptyDayStrokeDark
+import com.konstantyp.gymcal.ui.theme.EmptyDayStrokeLight
 import com.konstantyp.gymcal.ui.theme.LocalTypeColorMap
+import com.konstantyp.gymcal.ui.theme.TodayAccentLight
 import com.konstantyp.gymcal.ui.theme.TypeRuntimeColors
 import com.konstantyp.gymcal.ui.theme.contrastingOnColor
 
 private val CellShape = RoundedCornerShape(8.dp)
-
-/** Soft edge for empty cells on near-black #0F131C. */
-private val EmptyDayStroke = Color(0xFF2A303C)
 
 @Composable
 fun DayCell(
@@ -51,6 +54,11 @@ fun DayCell(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val dark = isSystemInDarkTheme()
+    val emptyFill = if (dark) EmptyDayFill else EmptyDayFillLight
+    val emptyOn = if (dark) EmptyDayOn else EmptyDayOnLight
+    val emptyStroke = if (dark) EmptyDayStrokeDark else EmptyDayStrokeLight
+    val todayAccent = if (dark) scheme.primary else TodayAccentLight
     val colorMap = LocalTypeColorMap.current
     val runtimes: List<TypeRuntimeColors> = typeIds.mapNotNull { colorMap[it] }
         .take(2)
@@ -59,8 +67,8 @@ fun DayCell(
 
     val baseFillSingle: Color = when {
         slotCount == 1 -> runtimes[0].container
-        isOutsideMonth -> EmptyDayFill.copy(alpha = 0.42f)
-        else -> EmptyDayFill
+        isOutsideMonth -> emptyFill.copy(alpha = if (dark) 0.42f else 0.50f)
+        else -> emptyFill
     }
 
     val fillSingle: Color = if (isSelected && !isOutsideMonth && slotCount <= 1) {
@@ -70,20 +78,20 @@ fun DayCell(
     }
 
     val stroke: BorderStroke? = when {
-        isToday && !isOutsideMonth -> BorderStroke(2.dp, scheme.primary)
+        isToday && !isOutsideMonth -> BorderStroke(2.dp, todayAccent)
         isSelected && !isOutsideMonth -> BorderStroke(2.dp, scheme.primary)
-        slotCount == 0 && !isOutsideMonth -> BorderStroke(1.dp, EmptyDayStroke)
+        slotCount == 0 && !isOutsideMonth -> BorderStroke(1.dp, emptyStroke)
         else -> null
     }
 
     // Dual: centered light/contrasting number over both halves (BINDING B).
     val numberColor: Color = when {
-        isOutsideMonth -> EmptyDayOn.copy(alpha = 0.45f)
+        isOutsideMonth -> emptyOn.copy(alpha = if (dark) 0.45f else 0.35f)
         slotCount >= 2 -> Color.White
         isSelected && !isOutsideMonth -> contrastingOnColor(fillSingle)
         slotCount == 1 -> runtimes[0].onContainer
-        isToday -> scheme.primary
-        else -> EmptyDayOn
+        isToday -> todayAccent
+        else -> emptyOn
     }
 
     val showTypeLabel = slotCount == 1 && typeNames.firstOrNull()?.isNotBlank() == true
