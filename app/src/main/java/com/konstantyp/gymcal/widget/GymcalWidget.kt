@@ -188,6 +188,8 @@ private val MonthDayGap = 3.dp
 private val MonthDayCorner = 12.dp
 /** Today primary ring (app DayCell BorderStroke 2dp primary). */
 private val TodayRing = 2.dp
+/** Light empty hairline (invisible in dark — stroke night == fill). */
+private val EmptyStroke = 1.dp
 @Composable
 private fun WidgetRoot(
     layoutMode: WidgetLayoutMode,
@@ -524,14 +526,22 @@ private fun DayCell(
     )
 
     val emptyFillProvider: GlanceColorProvider = ColorProvider(
-        day = emptyCellFill(isOutsideMonth),
-        night = emptyCellFill(isOutsideMonth),
+        day = emptyCellFillLight(isOutsideMonth),
+        night = emptyCellFillDark(isOutsideMonth),
+    )
+    val emptyStrokeProvider: GlanceColorProvider = ColorProvider(
+        day = emptyStrokeDay(),
+        night = emptyStrokeNight(),
+    )
+    val todayRingProvider: GlanceColorProvider = ColorProvider(
+        day = todayAccentDay(),
+        night = todayAccentNight(),
     )
 
     val onProvider: GlanceColorProvider = when {
         isOutsideMonth -> ColorProvider(
-            day = emptyCellOn(true),
-            night = emptyCellOn(true),
+            day = emptyCellOnLight(true),
+            night = emptyCellOnDark(true),
         )
         isDual -> ColorProvider(
             day = androidx.compose.ui.graphics.Color.White,
@@ -541,10 +551,13 @@ private fun DayCell(
             day = colors[0].onContainerDay,
             night = colors[0].onContainerNight,
         )
-        isToday -> GlanceTheme.colors.primary
+        isToday -> ColorProvider(
+            day = todayAccentDay(),
+            night = todayAccentNight(),
+        )
         else -> ColorProvider(
-            day = emptyCellOn(false),
-            night = emptyCellOn(false),
+            day = emptyCellOnLight(false),
+            night = emptyCellOnDark(false),
         )
     }
 
@@ -633,7 +646,7 @@ private fun DayCell(
             Box(
                 modifier = modifier
                     .cornerRadius(corner)
-                    .background(GlanceTheme.colors.primary)
+                    .background(todayRingProvider)
                     .padding(TodayRing)
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
@@ -660,7 +673,7 @@ private fun DayCell(
             Box(
                 modifier = modifier
                     .cornerRadius(corner)
-                    .background(GlanceTheme.colors.primary)
+                    .background(todayRingProvider)
                     .padding(TodayRing)
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
@@ -677,13 +690,13 @@ private fun DayCell(
                 }
             }
         }
-        // Today empty: EmptyDayFill + primary 2dp ring, number primary.
+        // Today empty: light white / dark #0F131C + today accent 2dp ring.
         isToday && !hasWorkout -> {
             val innerCorner = (corner.value - TodayRing.value).coerceAtLeast(2f).dp
             Box(
                 modifier = modifier
                     .cornerRadius(corner)
-                    .background(GlanceTheme.colors.primary)
+                    .background(todayRingProvider)
                     .padding(TodayRing)
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
@@ -726,17 +739,27 @@ private fun DayCell(
                 label()
             }
         }
-        // Empty: #0F131C fill, no outline (BINDING widget-no-empty-outline).
+        // Empty: light white + 1dp hairline (C); dark #0F131C, hairline invisible.
         else -> {
+            val innerCorner = (corner.value - EmptyStroke.value).coerceAtLeast(2f).dp
             Box(
                 modifier = modifier
                     .cornerRadius(corner)
-                    .background(emptyFillProvider)
+                    .background(emptyStrokeProvider)
+                    .padding(EmptyStroke)
                     .semantics { contentDescription = desc }
                     .clickable(openDay),
                 contentAlignment = Alignment.Center,
             ) {
-                label()
+                Box(
+                    modifier = GlanceModifier
+                        .fillMaxSize()
+                        .cornerRadius(innerCorner)
+                        .background(emptyFillProvider),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    label()
+                }
             }
         }
     }
