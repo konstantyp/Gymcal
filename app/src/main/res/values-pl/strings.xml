@@ -87,9 +87,14 @@
     <string name="stats_title">Statystyki</string>
     <string name="stats_row">Ten tydzień</string>
     <string name="stats_this_week">Ten tydzień</string>
+    <string name="stats_tab_week">Tydzień</string>
+    <string name="stats_tab_month">Miesiąc</string>
     <string name="stats_total_sessions">Łącznie sesji</string>
     <string name="stats_by_type">Według typu treningu</string>
+    <string name="stats_week_by_type">Tydzień · według typu</string>
+    <string name="stats_month_by_type">Miesiąc · według typu</string>
     <string name="stats_empty_week">Brak treningów w tym tygodniu</string>
+    <string name="stats_empty_month">Brak treningów w tym miesiącu</string>
     <string name="stats_type_this_week">%1$d w tym tygodniu</string>
 
     <string name="widget_week_label">Liftloq — tydzień</string>
