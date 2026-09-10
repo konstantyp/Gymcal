@@ -19,11 +19,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,14 +31,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -51,6 +54,9 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+/** Bottom clearance so quote can scroll fully above the FAB (~FAB height + 16dp). */
+private val FabContentClearance = 96.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +84,21 @@ fun CalendarScreen(
     val hasWorkoutsThisMonth = workouts.any { (date, ids) ->
         date.year == yearMonth.year && date.month == yearMonth.month &&
             ids.any { typesById.containsKey(it) }
+    }
+
+    val scrollState = rememberScrollState()
+    var fabExpanded by remember { mutableStateOf(true) }
+    // Collapse on downward scroll; expand when scrolling toward top or idle at top.
+    LaunchedEffect(scrollState) {
+        var previous = 0
+        snapshotFlow { scrollState.value }.collect { value ->
+            when {
+                value <= 0 -> fabExpanded = true
+                value > previous + 4 -> fabExpanded = false
+                value < previous - 4 -> fabExpanded = true
+            }
+            previous = value
+        }
     }
 
     Scaffold(
@@ -138,14 +159,39 @@ fun CalendarScreen(
                 ),
             )
         },
+        floatingActionButton = {
+            val label = stringResource(R.string.types_cta)
+            ExtendedFloatingActionButton(
+                onClick = onManageTypes,
+                expanded = fabExpanded,
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_biceps),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                },
+                text = {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                elevation = FloatingActionButtonDefaults.elevation(),
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp)
-                .padding(top = 8.dp, bottom = 16.dp),
+                .padding(top = 8.dp, bottom = FabContentClearance),
         ) {
             WeekdayHeader()
             Spacer(modifier = Modifier.height(4.dp))
@@ -160,7 +206,7 @@ fun CalendarScreen(
                 },
             )
 
-            // Activity Stats ListItem — between grid and Workout types (B)
+            // Activity Stats ListItem — between grid and legend (B)
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = stringResource(R.string.activity_section),
@@ -170,24 +216,6 @@ fun CalendarScreen(
             Spacer(modifier = Modifier.height(8.dp))
             ActivityStatsRow(onClick = onOpenStats)
 
-            Spacer(modifier = Modifier.height(12.dp))
-            FilledTonalButton(
-                onClick = onManageTypes,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Category,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text(
-                    text = stringResource(R.string.types_cta),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
             Spacer(modifier = Modifier.height(12.dp))
             Legend(
                 types = types,
