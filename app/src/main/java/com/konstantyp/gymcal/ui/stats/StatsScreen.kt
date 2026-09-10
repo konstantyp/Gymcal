@@ -1,5 +1,14 @@
 package com.konstantyp.gymcal.ui.stats
 
+import android.provider.Settings
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,18 +48,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
 import com.konstantyp.gymcal.data.WorkoutType
 import com.konstantyp.gymcal.ui.theme.LocalTypeColorMap
+import com.konstantyp.gymcal.ui.theme.TypeRuntimeColors
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+/** Material emphasized decelerate — BINDING motion token (~280 ms bar morph). */
+private val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
+private const val BarMorphDurationMs = 280
+private const val BarStaggerMs = 40
+private const val LabelCrossfadeMs = 120
+
+private enum class StatsPeriod { Week, Month }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,19 +112,19 @@ fun StatsScreen(
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
     }
 
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val scrollState = rememberScrollState()
-    // Approximate scroll targets: dual strip ~120dp, week section ~ (types*48 + header)
-    val weekSectionOffset = 0
-    val monthSectionOffset = remember(types.size) {
-        // Week title + supporting + bars (+ empty copy padding)
-        56 + types.size.coerceAtLeast(1) * 52 + 28
-    }
+    var selectedPeriod by remember { mutableIntStateOf(0) } // 0 = week, 1 = month
+    val period = if (selectedPeriod == 0) StatsPeriod.Week else StatsPeriod.Month
+    val reduceMotion = rememberReduceMotion()
 
-    LaunchedEffect(selectedTab) {
-        val target = if (selectedTab == 0) weekSectionOffset else monthSectionOffset
-        scrollState.animateScrollTo(target)
-    }
+    val activeCounts = if (period == StatsPeriod.Week) weekCounts else monthCounts
+    val activeTotal = if (period == StatsPeriod.Week) weekTotal else monthTotal
+    val activeSupporting = if (period == StatsPeriod.Week) weekRangeLabel else monthLabel
+    val activeTitle = stringResource(
+        if (period == StatsPeriod.Week) R.string.stats_week_by_type else R.string.stats_month_by_type,
+    )
+    val activeEmpty = stringResource(
+        if (period == StatsPeriod.Week) R.string.stats_empty_week else R.string.stats_empty_month,
+    )
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -135,24 +157,20 @@ fun StatsScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
+            PrimaryTabRow(selectedTabIndex = selectedPeriod) {
                 Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = {
-                        Text(stringResource(R.string.stats_tab_week))
-                    },
+                    selected = selectedPeriod == 0,
+                    onClick = { selectedPeriod = 0 },
+                    text = { Text(stringResource(R.string.stats_this_week)) },
                 )
                 Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = {
-                        Text(stringResource(R.string.stats_tab_month))
-                    },
+                    selected = selectedPeriod == 1,
+                    onClick = { selectedPeriod = 1 },
+                    text = { Text(stringResource(R.string.stats_this_month)) },
                 )
             }
 
-            // Dual totals strip — pinned below tabs (always visible)
+            // Dual totals strip — always visible; selecting a chip selects that period
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -163,13 +181,17 @@ fun StatsScreen(
                 TotalStripCard(
                     label = stringResource(R.string.stats_tab_week),
                     value = weekTotal,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    selected = selectedPeriod == 0,
+                    onClick = { selectedPeriod = 0 },
+                    reduceMotion = reduceMotion,
                     modifier = Modifier.weight(1f),
                 )
                 TotalStripCard(
                     label = stringResource(R.string.stats_tab_month),
                     value = monthTotal,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    selected = selectedPeriod == 1,
+                    onClick = { selectedPeriod = 1 },
+                    reduceMotion = reduceMotion,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -177,32 +199,21 @@ fun StatsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp)
                     .padding(top = 16.dp, bottom = 24.dp),
             ) {
-                // Week · by type
+                // Active period only — bars morph week ↔ month in place
                 PeriodByTypeSection(
-                    title = stringResource(R.string.stats_week_by_type),
-                    supporting = weekRangeLabel,
+                    title = activeTitle,
+                    supporting = activeSupporting,
                     types = types,
-                    counts = weekCounts,
-                    total = weekTotal,
-                    emptyMessage = stringResource(R.string.stats_empty_week),
+                    counts = activeCounts,
+                    total = activeTotal,
+                    emptyMessage = activeEmpty,
                     colorMap = colorMap,
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // Month · by type
-                PeriodByTypeSection(
-                    title = stringResource(R.string.stats_month_by_type),
-                    supporting = monthLabel,
-                    types = types,
-                    counts = monthCounts,
-                    total = monthTotal,
-                    emptyMessage = stringResource(R.string.stats_empty_month),
-                    colorMap = colorMap,
+                    periodKey = period,
+                    reduceMotion = reduceMotion,
                 )
             }
         }
@@ -210,13 +221,58 @@ fun StatsScreen(
 }
 
 @Composable
+private fun rememberReduceMotion(): Boolean {
+    val context = LocalContext.current
+    return remember(context) {
+        try {
+            Settings.Global.getFloat(
+                context.contentResolver,
+                Settings.Global.ANIMATOR_DURATION_SCALE,
+                1f,
+            ) == 0f
+        } catch (_: Exception) {
+            false
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun TotalStripCard(
     label: String,
     value: Int,
-    containerColor: Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+    reduceMotion: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val colorDuration = if (reduceMotion) 0 else BarMorphDurationMs
+    val selectedContainer = MaterialTheme.colorScheme.secondaryContainer
+    val unselectedContainer = MaterialTheme.colorScheme.surfaceContainerLow
+    val targetContainer = if (selected) selectedContainer else unselectedContainer
+    val containerColor by androidx.compose.animation.animateColorAsState(
+        targetValue = targetContainer,
+        animationSpec = tween(
+            durationMillis = colorDuration,
+            easing = EmphasizedDecelerate,
+        ),
+        label = "stripContainer",
+    )
+    val underlineColor by androidx.compose.animation.animateColorAsState(
+        targetValue = if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            Color.Transparent
+        },
+        animationSpec = tween(
+            durationMillis = colorDuration,
+            easing = EmphasizedDecelerate,
+        ),
+        label = "stripUnderline",
+    )
+
     Card(
+        onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
@@ -237,6 +293,14 @@ private fun TotalStripCard(
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(underlineColor),
+            )
         }
     }
 }
@@ -249,45 +313,66 @@ private fun PeriodByTypeSection(
     counts: Map<String, Int>,
     total: Int,
     emptyMessage: String,
-    colorMap: Map<String, com.konstantyp.gymcal.ui.theme.TypeRuntimeColors>,
+    colorMap: Map<String, TypeRuntimeColors>,
+    periodKey: StatsPeriod,
+    reduceMotion: Boolean,
 ) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        text = supporting,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    Spacer(modifier = Modifier.height(12.dp))
+    val labelDuration = if (reduceMotion) 0 else LabelCrossfadeMs
 
-    if (types.isEmpty() || total == 0) {
-        Text(
-            text = emptyMessage,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            textAlign = TextAlign.Start,
-        )
+    AnimatedContent(
+        targetState = Triple(supporting, title, emptyMessage),
+        transitionSpec = {
+            fadeIn(tween(labelDuration, easing = FastOutSlowInEasing)) togetherWith
+                fadeOut(tween(labelDuration, easing = FastOutSlowInEasing))
+        },
+        label = "periodLabels",
+    ) { (sup, tit, empty) ->
+        Column {
+            Text(
+                text = sup,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = tit,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (types.isEmpty() || total == 0) {
+                Text(
+                    text = empty,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    textAlign = TextAlign.Start,
+                )
+            }
+        }
     }
 
     if (types.isNotEmpty()) {
+        // Scale bars to the active period's max so end-states match mockups;
+        // fraction still morphs when the period (and thus counts/max) changes.
         val maxCount = counts.values.maxOrNull()?.coerceAtLeast(1) ?: 1
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            types.forEach { type ->
+            types.forEachIndexed { index, type ->
                 val count = counts[type.id] ?: 0
                 val fill = colorMap[type.id]?.container
                     ?: MaterialTheme.colorScheme.primary
+                val fraction = if (total == 0) 0f else count.toFloat() / maxCount
                 TypeStatBar(
                     name = type.name,
                     count = count,
-                    fraction = if (total == 0) 0f else count.toFloat() / maxCount,
+                    fraction = fraction,
                     fillColor = fill,
+                    staggerIndex = index,
+                    reduceMotion = reduceMotion,
+                    periodKey = periodKey,
                 )
             }
         }
@@ -300,8 +385,48 @@ private fun TypeStatBar(
     count: Int,
     fraction: Float,
     fillColor: Color,
+    staggerIndex: Int,
+    reduceMotion: Boolean,
+    periodKey: StatsPeriod,
     modifier: Modifier = Modifier,
 ) {
+    val targetFraction = fraction.coerceIn(0f, 1f)
+    val anim = remember { Animatable(targetFraction) }
+    val countAnim = remember { Animatable(count.toFloat()) }
+
+    LaunchedEffect(periodKey, targetFraction, count, reduceMotion) {
+        if (reduceMotion) {
+            anim.snapTo(targetFraction)
+            countAnim.snapTo(count.toFloat())
+        } else {
+            if (staggerIndex > 0) delay(BarStaggerMs.toLong() * staggerIndex)
+            // Morph fill width + trailing count from previous period values → new
+            kotlinx.coroutines.coroutineScope {
+                launch {
+                    anim.animateTo(
+                        targetValue = targetFraction,
+                        animationSpec = tween(
+                            durationMillis = BarMorphDurationMs,
+                            easing = EmphasizedDecelerate,
+                        ),
+                    )
+                }
+                launch {
+                    countAnim.animateTo(
+                        targetValue = count.toFloat(),
+                        animationSpec = tween(
+                            durationMillis = BarMorphDurationMs,
+                            easing = EmphasizedDecelerate,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    val displayFraction = anim.value
+    val displayCount = countAnim.value.roundToInt()
+
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -314,7 +439,7 @@ private fun TypeStatBar(
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = count.toString(),
+                text = displayCount.toString(),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -327,11 +452,11 @@ private fun TypeStatBar(
                 .clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
-            if (fraction > 0f) {
+            if (displayFraction > 0.001f) {
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                        .fillMaxWidth(displayFraction)
                         .clip(RoundedCornerShape(8.dp))
                         .background(fillColor),
                 )

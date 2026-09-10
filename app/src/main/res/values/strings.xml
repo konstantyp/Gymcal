@@ -107,12 +107,13 @@
     <string name="stats_title">Stats</string>
     <string name="stats_row">This week</string>
     <string name="stats_this_week">This week</string>
+    <string name="stats_this_month">This month</string>
     <string name="stats_tab_week">Week</string>
     <string name="stats_tab_month">Month</string>
     <string name="stats_total_sessions">Total sessions</string>
     <string name="stats_by_type">By workout type</string>
-    <string name="stats_week_by_type">Week · by type</string>
-    <string name="stats_month_by_type">Month · by type</string>
+    <string name="stats_week_by_type">By workout type · this week</string>
+    <string name="stats_month_by_type">By workout type · this month</string>
     <string name="stats_empty_week">No workouts this week</string>
     <string name="stats_empty_month">No workouts this month</string>
     <string name="stats_type_this_week">%1$d this week</string>

@@ -87,12 +87,13 @@
     <string name="stats_title">Statistik</string>
     <string name="stats_row">Diese Woche</string>
     <string name="stats_this_week">Diese Woche</string>
+    <string name="stats_this_month">Diesen Monat</string>
     <string name="stats_tab_week">Woche</string>
     <string name="stats_tab_month">Monat</string>
     <string name="stats_total_sessions">Einheiten gesamt</string>
     <string name="stats_by_type">Nach Trainingsart</string>
-    <string name="stats_week_by_type">Woche · nach Art</string>
-    <string name="stats_month_by_type">Monat · nach Art</string>
+    <string name="stats_week_by_type">Nach Trainingsart · diese Woche</string>
+    <string name="stats_month_by_type">Nach Trainingsart · diesen Monat</string>
     <string name="stats_empty_week">Keine Trainings diese Woche</string>
     <string name="stats_empty_month">Keine Trainings diesen Monat</string>
     <string name="stats_type_this_week">%1$d diese Woche</string>
