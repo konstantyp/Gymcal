@@ -229,7 +229,6 @@ private fun GymcalRoot(
                             }
                         },
                         onOpenAbout = { navController.navigate("about") },
-                        onOpenStats = { navController.navigate("stats") },
                     )
                 }
                 composable("about") {

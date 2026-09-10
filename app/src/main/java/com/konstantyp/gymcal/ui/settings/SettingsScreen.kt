@@ -15,13 +15,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material3.AlertDialog
@@ -75,7 +72,6 @@ fun SettingsScreen(
     showMotivationQuote: Boolean,
     onShowMotivationQuoteChange: (Boolean) -> Unit,
     onOpenAbout: () -> Unit,
-    onOpenStats: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -136,6 +132,7 @@ fun SettingsScreen(
 
     val exportLabel = stringResource(R.string.export_workout_plan)
     val importLabel = stringResource(R.string.import_workout_plan)
+    val aboutLabel = stringResource(R.string.about_row)
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -168,7 +165,6 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
                 .padding(top = 8.dp, bottom = 16.dp),
         ) {
@@ -286,16 +282,6 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SettingsNavRow(
-                title = stringResource(R.string.stats_row),
-                onClick = onOpenStats,
-            )
-            SettingsNavRow(
-                title = stringResource(R.string.about_row),
-                onClick = onOpenAbout,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -320,6 +306,18 @@ fun SettingsScreen(
                     checked = showMotivationQuote,
                     onCheckedChange = onShowMotivationQuoteChange,
                 )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            FilledTonalButton(
+                onClick = onOpenAbout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .semantics { contentDescription = aboutLabel },
+            ) {
+                Text(text = aboutLabel)
             }
         }
     }
@@ -369,34 +367,6 @@ fun SettingsScreen(
                     Text(stringResource(R.string.cancel))
                 }
             },
-        )
-    }
-}
-
-@Composable
-private fun SettingsNavRow(
-    title: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
