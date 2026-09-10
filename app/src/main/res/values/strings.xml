@@ -99,6 +99,10 @@
     <string name="settings_show_quote">Show motivation quote</string>
     <string name="settings_show_quote_supporting">ZenQuotes on the calendar screen</string>
 
+    <!-- Calendar Activity -->
+    <string name="activity_section">Activity</string>
+    <string name="activity_stats_supporting">This week by type</string>
+
     <!-- Stats -->
     <string name="stats_title">Stats</string>
     <string name="stats_row">This week</string>

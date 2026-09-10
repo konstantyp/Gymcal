@@ -82,6 +82,8 @@
     <string name="about_rights">Alle Rechte vorbehalten</string>
     <string name="settings_show_quote">Motivationszitat anzeigen</string>
     <string name="settings_show_quote_supporting">ZenQuotes auf dem Kalenderbildschirm</string>
+    <string name="activity_section">Aktivität</string>
+    <string name="activity_stats_supporting">Diese Woche nach Art</string>
     <string name="stats_title">Statistik</string>
     <string name="stats_row">Diese Woche</string>
     <string name="stats_this_week">Diese Woche</string>

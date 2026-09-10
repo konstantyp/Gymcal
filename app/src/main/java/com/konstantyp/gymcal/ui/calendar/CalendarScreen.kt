@@ -1,5 +1,7 @@
 package com.konstantyp.gymcal.ui.calendar
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,10 +12,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -32,9 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.konstantyp.gymcal.R
@@ -53,6 +60,7 @@ fun CalendarScreen(
     onDayClick: (LocalDate) -> Unit,
     onManageTypes: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenStats: () -> Unit = {},
     showMotivationQuote: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -151,7 +159,18 @@ fun CalendarScreen(
                     onDayClick(date)
                 },
             )
-            Spacer(modifier = Modifier.height(16.dp))
+
+            // Activity Stats ListItem — between grid and Workout types (B)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.activity_section),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            ActivityStatsRow(onClick = onOpenStats)
+
+            Spacer(modifier = Modifier.height(12.dp))
             FilledTonalButton(
                 onClick = onManageTypes,
                 modifier = Modifier
@@ -187,6 +206,52 @@ fun CalendarScreen(
                 MotivationQuoteBar()
             }
         }
+    }
+}
+
+@Composable
+private fun ActivityStatsRow(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.BarChart,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(6.dp),
+        )
+        Spacer(modifier = Modifier.size(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.stats_title),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = stringResource(R.string.activity_stats_supporting),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

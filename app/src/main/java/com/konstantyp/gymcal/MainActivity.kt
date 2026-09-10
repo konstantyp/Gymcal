@@ -151,6 +151,9 @@ private fun GymcalRoot(
                         onOpenSettings = {
                             navController.navigate("settings")
                         },
+                        onOpenStats = {
+                            navController.navigate("stats")
+                        },
                         showMotivationQuote = showMotivationQuote,
                     )
                 }

@@ -82,6 +82,8 @@
     <string name="about_rights">Wszelkie prawa zastrzeżone</string>
     <string name="settings_show_quote">Pokaż cytat motywacyjny</string>
     <string name="settings_show_quote_supporting">ZenQuotes na ekranie kalendarza</string>
+    <string name="activity_section">Aktywność</string>
+    <string name="activity_stats_supporting">Ten tydzień według typu</string>
     <string name="stats_title">Statystyki</string>
     <string name="stats_row">Ten tydzień</string>
     <string name="stats_this_week">Ten tydzień</string>
