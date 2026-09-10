@@ -31,8 +31,26 @@ val TypeColorPresetNames: List<String> = listOf(
     "Indigo", "Fiolet", "Magenta", "Róż", "Kamień", "Grafit",
 )
 
-/** Empty day cell fill (app + widgets) — near-black empty fill (BINDING weekends-empty-0F131C). */
+/** Dark empty day fill — BINDING weekends-empty-0F131C (unchanged). */
 val EmptyDayFill = Color(0xFF0F131C)
 
-/** Light on-empty text for contrast on [EmptyDayFill]. */
+/** Dark on-empty text for contrast on [EmptyDayFill]. */
 val EmptyDayOn = Color(0xFFE8EEF8)
+
+/** Dark empty hairline (app DayCell). */
+val EmptyDayStrokeDark = Color(0xFF2A303C)
+
+/** Light empty fill — BINDING light-daycell-C. */
+val EmptyDayFillLight = Color(0xFFFFFFFF)
+
+/** Light empty number — BINDING light-daycell-C. */
+val EmptyDayOnLight = Color(0xFF3C3C43)
+
+/** Light empty hairline — BINDING light-daycell-C. */
+val EmptyDayStrokeLight = Color(0xFFC6C6C8)
+
+/** Light today accent ring / number — BINDING light-daycell-C. */
+val TodayAccentLight = Color(0xFF0B57D0)
+
+/** Dark today accent fallback when not using dynamic primary. */
+val TodayAccentDark = Color(0xFFA8C7FA)
