@@ -206,7 +206,12 @@ fun CalendarScreen(
                 },
             )
 
-            // Activity Stats ListItem — between grid and legend (B)
+            // Type legend above Activity (1.1.12)
+            Legend(
+                types = types,
+                onManageTypes = onManageTypes,
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = stringResource(R.string.activity_section),
@@ -215,12 +220,6 @@ fun CalendarScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             ActivityStatsRow(onClick = onOpenStats)
-
-            Spacer(modifier = Modifier.height(12.dp))
-            Legend(
-                types = types,
-                onManageTypes = onManageTypes,
-            )
             if (!hasWorkoutsThisMonth) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
