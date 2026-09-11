@@ -19,8 +19,8 @@ android {
         applicationId = "com.konstantyp.gymcal"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.1.13"
+        versionCode = 16
+        versionName = "1.1.14"
         setProperty("archivesBaseName", "Liftloq")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
