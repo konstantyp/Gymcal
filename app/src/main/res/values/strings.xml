@@ -90,10 +90,12 @@
     <string name="about_title">About</string>
     <string name="about_row">About Liftloq</string>
     <string name="about_version">Version %1$s</string>
-    <string name="about_blurb_line1">Local workout calendar</string>
-    <string name="about_blurb_line2">No account · Material You</string>
+    <string name="about_blurb_line1">All workout data is stored locally on this device</string>
+    <string name="about_blurb_line2">No account · no cloud sync · Material You</string>
     <string name="about_copyright">© 2026 Liftloq</string>
     <string name="about_rights">All rights reserved</string>
+    <string name="about_privacy">Privacy policy</string>
+    <string name="about_privacy_url" translatable="false">https://konstantyp.github.io/Gymcal/privacy/</string>
 
     <!-- Quote visibility -->
     <string name="settings_show_quote">Show motivation quote</string>

@@ -1,6 +1,8 @@
 package com.konstantyp.gymcal.ui.about
 
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -50,7 +53,7 @@ fun AboutScreen(
                 @Suppress("DEPRECATION")
                 pm.getPackageInfo(pkg, 0).versionName
             }
-        }.getOrNull().orEmpty().ifBlank { "1.1.8" }
+        }.getOrNull().orEmpty().ifBlank { "1.1.13" }
     }
 
     Scaffold(
@@ -143,6 +146,16 @@ fun AboutScreen(
                     .padding(bottom = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                FilledTonalButton(
+                    onClick = {
+                        val url = context.getString(R.string.about_privacy_url)
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(text = stringResource(R.string.about_privacy))
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = stringResource(R.string.about_copyright),
                     style = MaterialTheme.typography.labelLarge,

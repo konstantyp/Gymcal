@@ -21,3 +21,5 @@ out/
 *.jks
 *.keystore
 google-services.json
+keystore.properties
+release/

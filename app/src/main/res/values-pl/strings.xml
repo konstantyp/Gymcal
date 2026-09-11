@@ -76,10 +76,11 @@
     <string name="about_title">O aplikacji</string>
     <string name="about_row">O Liftloq</string>
     <string name="about_version">Wersja %1$s</string>
-    <string name="about_blurb_line1">Lokalny kalendarz treningów</string>
-    <string name="about_blurb_line2">Bez konta · Material You</string>
+    <string name="about_blurb_line1">Wszystkie dane treningowe są przechowywane lokalnie na tym urządzeniu</string>
+    <string name="about_blurb_line2">Bez konta · bez synchronizacji w chmurze · Material You</string>
     <string name="about_copyright">© 2026 Liftloq</string>
     <string name="about_rights">Wszelkie prawa zastrzeżone</string>
+    <string name="about_privacy">Polityka prywatności</string>
     <string name="settings_show_quote">Pokaż cytat motywacyjny</string>
     <string name="settings_show_quote_supporting">ZenQuotes na ekranie kalendarza</string>
     <string name="activity_section">Aktywność</string>
